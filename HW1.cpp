@@ -20,7 +20,7 @@ Output:
 
 using namespace std;
 
-clock_t begin = clock();
+clock_t begintime = clock();
 
 int wmatch =  3;
 int wmism  =  -1;
@@ -60,6 +60,8 @@ int alignment_score(int **score,string seq1,string seq2){
             }
         }
     }
+    cout << (sizeof(score)) << endl;
+    cout << (sizeof(score)/sizeof(score[0][0])) << endl; //says this has a length of 1?
     return score[seq1.size()][seq2.size()];
 }
 
@@ -72,16 +74,16 @@ int max_seq(string seq1,string seq2)
         score[i]=new int[seq2.size()+1];
     }
 
-    //I am working on this part -- considering how to make an array of previous positions
+    /*I am working on this part -- considering how to make an array of previous positions
+    Edit: I decided that though it'd be nice to have a matrix of pairs ultimately there's a faster solution
     int **previous;
     prev = new int*[seq1.size()+1];
     for(int i=0;i<seq1.size()+1;++i)
     {
-        prev[i]=new int[seq2.size()+1];
-    }
+        prev[i]=new int[seq2.size()+1]; //change to pairs?
+    }*/
 
     return alignment_score(score,seq1,seq2);
-
 }
 
 void trace_back(string seq1,string seq2)
@@ -92,12 +94,12 @@ void trace_back(string seq1,string seq2)
     /*STILL TROUBLESHOOTING THIS PART. Previously I was not tracing back the one
     previous-position-line of interest (from S[n][m] only).*/
 
-    //pair<int,int> endpt = make_pair(seq1.size(),seq2.size())
+    pair<int,int> endpt = make_pair(seq1.size(),seq2.size());
     cout << seq1.size()<< endl;
     cout << optPos[seq1.size()+1].first << " " << optPos[seq2.size()+1].second << endl;
-    /*while()
+    while(endpt != [0][0]) //(0,1)?
         {
-        pair<int,int> step
+        pair<int,int> prev = optPos(optPos.first*seq1.size()+optPos.second);
             if (optPos[i].first == '-'){
                 aligned1.append("-");
                 aligned2.push_back(seq2[i]);
@@ -110,7 +112,7 @@ void trace_back(string seq1,string seq2)
             }
         }
     cout << aligned1.size() << endl;
-    cout << aligned2.size() << endl;*/
+    cout << aligned2.size() << endl;
 }
 
 //argv[1]:string file, argv[2] int wmatch, argv[3] int wmism, argv[4] int windel
@@ -136,7 +138,6 @@ int main(int argc, char **argv)
 
     string read_lines;
     string appending;
-    int no = -1;
 
     while (!openfile.eof()) // or, if(!openread.fail())?
     {
@@ -153,24 +154,22 @@ int main(int argc, char **argv)
                 specseq.push_back(appending);
                 appending = "";
             }
-            ++no;
             specname.push_back(read_lines);
-            //cout << specname[no] << endl;
             getline(openfile,read_lines); //just to get the rest of the line out of the way
         }
         else if(read_lines.size() > 0)
         {
             appending.append(read_lines);
-            //specseq[no].append(read_lines);
         }
     }
-    //must pushback the final sequence
+    //must pushback or will miss the sequence of the final species
     specseq.push_back(appending);
     openfile.close();
 
-    /* Testing to see if it worked. Must use a loop can't cout whole thing
+    /* Testing to see if it worked. Must use a loop; can't cout whole thing
     for(int i=0; i<specname.size();i++){
         cout << specseq[i]<<endl;}*/
+
     ofstream resfile;
     resfile.open("HW1-output-LEngie.txt");
 
@@ -184,8 +183,8 @@ int main(int argc, char **argv)
                 align.species2 = specname[j];
                 cout << specname[i] << " " << specname[j] << endl;
                 align.alignmentscore = max_seq(specseq[i],specseq[j]);
-                //cout << align.alignmentscore << endl;
-                trace_back(specseq[i],specseq[j]);
+                cout << align.alignmentscore << endl;
+                //trace_back(specseq[i],specseq[j]);
                 resfile << "first sequence" << endl;
                 resfile << aligned1 << endl;
                 resfile << "second sequence" << endl;
@@ -196,9 +195,7 @@ int main(int argc, char **argv)
 
     resfile.close();
 
+    clock_t end = clock();
+    printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
     return 0;
 }
-
-
-//Also I haven't corrected the CPU-time-calculating code
-clock_t end = clock();
