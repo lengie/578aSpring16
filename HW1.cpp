@@ -39,7 +39,8 @@ int alignment_score(int **score,string seq1,string seq2){
             if (i==0){
                 score[i][j] = j*windel; //replace with argv[4]
             }else if (j==0){
-                score[i][j] = i*windel;}
+                score[i][j] = i*windel;
+                }
             //else if (score[i][j]>0)
                 //return score[i][j];
             else {
@@ -60,8 +61,8 @@ int alignment_score(int **score,string seq1,string seq2){
             }
         }
     }
-    cout << (sizeof(score)) << endl;
-    cout << (sizeof(score)/sizeof(score[0][0])) << endl; //says this has a length of 1?
+    cout << optPos.size() << endl;
+    //cout << (sizeof(score)/sizeof(score[0][0])) << endl; //says this has a length of 1?
     return score[seq1.size()][seq2.size()];
 }
 
@@ -73,16 +74,6 @@ int max_seq(string seq1,string seq2)
     {
         score[i]=new int[seq2.size()+1];
     }
-
-    /*I am working on this part -- considering how to make an array of previous positions
-    Edit: I decided that though it'd be nice to have a matrix of pairs ultimately there's a faster solution
-    int **previous;
-    prev = new int*[seq1.size()+1];
-    for(int i=0;i<seq1.size()+1;++i)
-    {
-        prev[i]=new int[seq2.size()+1]; //change to pairs?
-    }*/
-
     return alignment_score(score,seq1,seq2);
 }
 
@@ -91,26 +82,30 @@ void trace_back(string seq1,string seq2)
     aligned1 = "";
     aligned2 = "";
 
-    /*STILL TROUBLESHOOTING THIS PART. Previously I was not tracing back the one
-    previous-position-line of interest (from S[n][m] only).*/
-
-    pair<int,int> endpt = make_pair(seq1.size(),seq2.size());
-    cout << seq1.size()<< endl;
-    cout << optPos[seq1.size()+1].first << " " << optPos[seq2.size()+1].second << endl;
-    while(endpt != [0][0]) //(0,1)?
-        {
-        pair<int,int> prev = optPos(optPos.first*seq1.size()+optPos.second);
-            if (optPos[i].first == '-'){
-                aligned1.append("-");
-                aligned2.push_back(seq2[i]);
-            }else if(optPos[i].second == '-'){
-                aligned1.push_back(seq1[i]);
-                aligned2.append("-");
-            }else{
-                aligned1.push_back(seq1[i]);
-                aligned2.push_back(seq2[i]);
-            }
+    //Starting the traceback from the last element
+    //Technically I could just trace through the max score values instead of making the pairs in the first place
+    int current = optPos.size();
+    cout << current << endl;
+    cout << optPos[current].first << " " << optPos[current].second << endl;
+    vector<pair<int,int> > relevant;
+    while(current != 0){
+        relevant.push_back(optPos[current]);
+        current = (optPos[current].first)*(seq1.size()-1) + optPos[current].second;
+        cout << current << endl;
+    }
+    for(int i=0;i<relevant.size();++i) //(0,1)?
+    {
+        if (relevant[i].first == '-'){
+            aligned1.append("-");
+            aligned2.push_back(seq2[i]);
+        }else if(relevant[i].second == '-'){
+            aligned1.push_back(seq1[i]);
+            aligned2.append("-");
+        }else{
+            aligned1.push_back(seq1[i]);
+            aligned2.push_back(seq2[i]);
         }
+    }
     cout << aligned1.size() << endl;
     cout << aligned2.size() << endl;
 }
@@ -170,11 +165,11 @@ int main(int argc, char **argv)
     for(int i=0; i<specname.size();i++){
         cout << specseq[i]<<endl;}*/
 
-    ofstream resfile;
-    resfile.open("HW1-output-LEngie.txt");
+    //ofstream resfile;
+    //resfile.open("HW1-output-LEngie.txt");
 
-    for(int i=0;i<specname.size();++i){
-            for(int j=0;j<specname.size();++j)
+    for(int i=0;i<1;i++){//specname.size();++i){
+            for(int j=0;j<2;j++)//specname.size();++j)
             {
                 if(i!=j)
                 {
@@ -183,17 +178,17 @@ int main(int argc, char **argv)
                 align.species2 = specname[j];
                 cout << specname[i] << " " << specname[j] << endl;
                 align.alignmentscore = max_seq(specseq[i],specseq[j]);
-                cout << align.alignmentscore << endl;
-                //trace_back(specseq[i],specseq[j]);
-                resfile << "first sequence" << endl;
-                resfile << aligned1 << endl;
-                resfile << "second sequence" << endl;
-                resfile << aligned2 << endl;
+                //cout << align.alignmentscore << endl;
+                trace_back(specseq[i],specseq[j]);
+                //resfile << "first sequence" << endl;
+                //resfile << aligned1 << endl;
+                //resfile << "second sequence" << endl;
+                //resfile << aligned2 << endl;
                 }
             }
         }
 
-    resfile.close();
+    //resfile.close();
 
     clock_t end = clock();
     printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
