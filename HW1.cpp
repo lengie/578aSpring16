@@ -52,17 +52,18 @@ int alignment_score(int **score,string seq1,string seq2){
                 score[i][j] = max(t1,max(t2,t3));
 
                 //keeping track of the position of optimal alignment
-                if(t1>score[i][j]){
+                if(t1==score[i][j]){
                     optPos.push_back(make_pair(i-1,j-1));
-                }else if(t2>score[i][j]){
+                }else if(t2==score[i][j]){
                     optPos.push_back(make_pair(i,'-'));
                 }else{
                     optPos.push_back(make_pair('-',j));}
+                cout << optPos.size() << endl;
+                cout << optPos[optPos.size()].first << " " << optPos[optPos.size()].second << endl; //outputting 0,0 always
             }
         }
     }
-    cout << optPos.size() << endl;
-    //cout << (sizeof(score)/sizeof(score[0][0])) << endl; //says this has a length of 1?
+    //cout << optPos.size() << endl;
     return score[seq1.size()][seq2.size()];
 }
 
@@ -178,7 +179,7 @@ int main(int argc, char **argv)
                 align.species2 = specname[j];
                 cout << specname[i] << " " << specname[j] << endl;
                 align.alignmentscore = max_seq(specseq[i],specseq[j]);
-                //cout << align.alignmentscore << endl;
+                cout << align.alignmentscore << endl;
                 trace_back(specseq[i],specseq[j]);
                 //resfile << "first sequence" << endl;
                 //resfile << aligned1 << endl;
