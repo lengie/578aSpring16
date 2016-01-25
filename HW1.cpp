@@ -26,7 +26,7 @@ int wmatch =  3;
 int wmism  =  -1;
 int windel = -3;
 
-vector<pair<int,int> > optPos;
+vector<pair<int,int> > optPos; //look into making this a hash map
 string aligned1;
 string aligned2;
 
@@ -55,15 +55,16 @@ int alignment_score(int **score,string seq1,string seq2){
                 if(t1==score[i][j]){
                     optPos.push_back(make_pair(i-1,j-1));
                 }else if(t2==score[i][j]){
-                    optPos.push_back(make_pair(i,'-'));
+                    optPos.push_back(make_pair(i,optPos[optPos.size()-1].second));
                 }else{
-                    optPos.push_back(make_pair('-',j));}
-                cout << optPos.size() << endl;
-                cout << optPos[optPos.size()].first << " " << optPos[optPos.size()].second << endl; //outputting 0,0 always
+                    optPos.push_back(make_pair(optPos[optPos.size()-1].first,j));}
             }
         }
     }
     //cout << optPos.size() << endl;
+    cout << optPos[30579].first << " " << optPos[30579].second << endl; //Just testing
+    cout << optPos[30458].first << " " << optPos[30458].second << endl; //These two numbers are cycling in traceback
+
     return score[seq1.size()][seq2.size()];
 }
 
@@ -85,21 +86,21 @@ void trace_back(string seq1,string seq2)
 
     //Starting the traceback from the last element
     //Technically I could just trace through the max score values instead of making the pairs in the first place
-    int current = optPos.size();
-    cout << current << endl;
-    cout << optPos[current].first << " " << optPos[current].second << endl;
+    long long int current = optPos.size()-1;
     vector<pair<int,int> > relevant;
+
     while(current != 0){
         relevant.push_back(optPos[current]);
+        //THE FOLLOWING LINE CONTAINS THE CURRENT PROBLEM
         current = (optPos[current].first)*(seq1.size()-1) + optPos[current].second;
-        cout << current << endl;
+        //cout << current << endl;
     }
     for(int i=0;i<relevant.size();++i) //(0,1)?
     {
-        if (relevant[i].first == '-'){
+        if (relevant[i].first == relevant[i-1].first){
             aligned1.append("-");
             aligned2.push_back(seq2[i]);
-        }else if(relevant[i].second == '-'){
+        }else if(relevant[i].second == relevant[i-1].second){
             aligned1.push_back(seq1[i]);
             aligned2.append("-");
         }else{
