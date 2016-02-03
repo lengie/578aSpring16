@@ -1,13 +1,13 @@
 /*
-MATH578a Spring 2016 HW1 - Liana Engie
-This program finds the optimal global alignment of two inputted sequences
+MATH578a Spring 2016 HW2 - Liana Engie
+This program finds the banded alignment of pairs of sequences from a file with several input sequences
 Input:
     File with FASTA sequences,
     w(match),
     w(mismatch),
     w(indel)
 Output:
-    r, alignment score
+    d, distance between sequences
     T, optimal alignment in a .tex file
 */
 #include <iostream>
@@ -53,17 +53,16 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int k){
             else {
                 //HAVE TO ADD THE BOUNDARY CONDITIONS FOR LEFT AND RIGHT
                 //sequence char is off from corresponding score by 1
-                int t1 = score[i-1][j-1]+ ((seq1[i-1]==seq2[j-1]) ? wmatch:wmism); //argv[2]:argv[3]
+                int t1 = score[i-1][j]+ ((seq1[i-1]==seq2[j-1]) ? wmatch:wmism); //argv[2]:argv[3]
                 int t2 = score[i][j-1] + windel;
-                int t3 = score[i-1][j] + windel;
-                //cout << t1 << " " << t2 << " " << t3 << endl;
-                score[i][j] = max(t1,max(t2,t3));
+                int t3 = score[i-1][j+1] + windel;
+                score[i][j-(i-k)+1] = max(t1,max(t2,t3));
 
                 //keeping track of the position of optimal alignment
-                if(t1==score[i][j]){
+                if(t1==max(t1,max(t2,t3))){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-2);
                     dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)]+((seq1[i-1]==seq2[j-1]) ? dmatch:dmism);
-                }else if(t2==score[i][j]){
+                }else if(t2==max(t1,max(t2,t3))){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-1,j-2);
                     dist[make_pair(i-1,j-1)] = dist[make_pair(i-1,j-2)]+dindel;
                 }else{
@@ -100,13 +99,13 @@ void trace_back(string seq1,string seq2)
 
     //Starting the traceback from the last element
     vector<pair<int,int> > relevant;
-    //relevant = optPos[make_pair(n-1,m-1)].first,optPos[make_pair(n-1,m-1)].second);
-    relevant = make_pair(n-1,m-1);
+    relevant.push_back(make_pair(n-1,m-1)); //corresponds to sequence index, not score index
 
-    while(relevant.first+relevant.second != 0){
-
+    while(relevant[0].first+relevant[0].second != 0){
+        relevant.insert(relevant.begin(),
+                        optPos[relevant[0]]);
     }
-    for(int i=0;i<relevant.size();++i) //(0,1)?
+    for(int i=0;i<relevant.size();++i)
     {
         if (relevant[i].first == relevant[i-1].first){
             aligned1.append("-");
