@@ -99,15 +99,12 @@ void trace_back(string seq1,string seq2)
     aligned2 = "";
 
     //Starting the traceback from the last element
-    //Technically I could just trace through the max score values instead of making the pairs in the first place
-    long long int current = optPos.size()-1;
     vector<pair<int,int> > relevant;
+    //relevant = optPos[make_pair(n-1,m-1)].first,optPos[make_pair(n-1,m-1)].second);
+    relevant = make_pair(n-1,m-1);
 
-    while(current != 0){
-        relevant.push_back(optPos[current]);
-        //THE FOLLOWING LINE CONTAINS THE CURRENT PROBLEM
-        current = (optPos[current].first)*(seq1.size()-1) + optPos[current].second;
-        //cout << current << endl;
+    while(relevant.first+relevant.second != 0){
+
     }
     for(int i=0;i<relevant.size();++i) //(0,1)?
     {
@@ -193,7 +190,18 @@ int main(int argc, char **argv)
                 cout << specname[i] << " " << specname[j] << endl;
                 cout << "What is the k value for these sequences? Input an integer or -1 if unknown: " << endl;
                 cin >> k;
-                align.alignmentscore = max_seq(specseq[i],specseq[j],k);
+                    if(k == -1){
+                        k = 1;
+                        int distance = 0;
+                        while(k>distance){
+                            distance = max_seq(specseq[i],specseq[j],k);
+                            k=k*2;
+                        }
+                        align.alignmentscore = distance;
+                        cout << "k was " << k/2 << endl;
+                    }else{
+                        align.alignmentscore = max_seq(specseq[i],specseq[j],k);
+                    }
                 cout << align.alignmentscore << endl;
                 trace_back(specseq[i],specseq[j]);
                 //resfile << "first sequence" << endl;
