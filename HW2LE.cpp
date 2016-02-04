@@ -44,27 +44,36 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
     for(int i=0;i<=n;++i)
     {
         score[i][0]=-100; //boundary on left as later rows won't initialize
-        for(int j=max(0,i-c);j<=min(m,m-n+i+c);++j){
+        int leftlim = max(0,i-c);
+        int rightlim = min(m,m-n+i+c);
+        for(int j=leftlim; j <= rightlim; ++j){
+            int currgap = j-i+c;
             if (i==0){
                 score[i][j+c+1] = j*windel; //replace with argv[4]
             }else if (j==0){
                 score[i][c-i+1] = i*windel;
+            }else if (j==m-n+i+c){
+                score[i][j+c] = -100;
             }else {
-                int t1 = score[i-1][j-(i-c)+2]+ ((seq1[i-1]==seq2[j-1]) ? wmatch:wmism); //argv[2]:argv[3]
-                int t2 = score[i][j-(i-c)+1] + windel;
-                int t3 = score[i-1][j-(i-c)+3] + windel;
-                score[i][j-(i-c)+2] = max(t1,max(t2,t3));
+                int t1 = score[i-1][currgap+1]+ ((seq1[i-1]==seq2[j-1]) ? wmatch:wmism); //argv[2]:argv[3]
+                int t2 = score[i][currgap] + windel;
+                int t3 = score[i-1][currgap+2] + windel;
+                score[i][currgap+1] = max(t1,max(t2,t3));
+                //cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
 
                 //keeping track of the position of optimal alignment and distance
-                if(t1==score[i][j-(i-c)+2]){
+                if(score[i][currgap+1] == t1)){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-2);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)]+((seq1[i-1]==seq2[j-1]) ? dmatch:dmism);
-                }else if(t2==score[i][j-(i-c)]){
+                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)] + ( (seq1[i-1]==seq2[j-1])?dmatch:dmism);
+                    //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
+                }else if(score[i][currgap+1] == t2){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-1,j-2);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-1,j-2)]+dindel;
-                }else{
+                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-1,j-2)] + dindel;
+                    //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
+                }else if(score[i][currgap+1] == t3){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-1);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-1)]+dindel;
+                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-1)] + dindel;
+                    //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
                 }
             }
         }
@@ -74,8 +83,7 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
     return score[n][c+m-n+1];
 }
 
-int max_seq(string seq1,string seq2,float k)
-{
+int max_seq(string seq1,string seq2,float k){
     int n = seq1.size(); //should make a sequence class with names and sizes public instead of doing this
     int m = seq2.size();
     int c = ceil(k/2);
@@ -83,7 +91,6 @@ int max_seq(string seq1,string seq2,float k)
     int **score;
     score = new int*[n+1]; //initializations => score has 1 more row than seq size
     int temp = m-n+ 2*c +2;
-    cout << "matrix size is " << temp << endl;
 
     for(int i=0;i<n+1;++i)
     {
@@ -107,7 +114,11 @@ void trace_back(string seq1,string seq2)
     while(relevant[0].first+relevant[0].second != 0){
         relevant.insert(relevant.begin(),
                         optPos[relevant[0]]);
+        cout << "The next position is " << optPos[relevant[0]].first << "," << optPos[relevant[0]].second << endl;
     }
+
+    cout << "the path is " << relevant.size() << "bp long." << endl;
+
     for(int i=0;i<relevant.size();++i)
     {
         if (relevant[i].first == relevant[i-1].first){
@@ -121,8 +132,6 @@ void trace_back(string seq1,string seq2)
             aligned2.push_back(seq2[i]);
         }
     }
-    cout << aligned1.size() << endl;
-    cout << aligned2.size() << endl;
 }
 
 //argv[1]:string file, argv[2] int wmatch, argv[3] int wmism, argv[4] int windel
@@ -168,15 +177,15 @@ int main(int argc, char **argv)
     specseq.push_back(appending);
     openfile.close();
 
-    //ofstream resfile;
-    //resfile.open("HW2-output-LEngie.txt");
+    ofstream resfile;
+    resfile.open("HW2-output-LEngie.txt");
 
     float k;
     int alignmentscore;
     int distance;
 
-    for(int i=0;i<1;i++){//specname.size();++i){
-        for(int j=i+1;j<2;j++){//specname.size();++j){
+    for(int i=0;specname.size();++i){
+        for(int j=i+1;j<specname.size();++j){
             //The first dimension should be smaller than the second
             if(specseq[i].size()>specseq[j].size()){
                 cout << specname[j] << " " << specname[i] << endl;
@@ -186,54 +195,53 @@ int main(int argc, char **argv)
                     k = 1;
                     distance = 0;
                     while(k>distance){
-                        int temp = specseq[i].size()-specseq[j].size()+ceil(k/2)-1;
-
                         alignmentscore = max_seq(specseq[j],specseq[i],k);
-                        distance = dist[make_pair(specseq[j].size()-1,temp)];
+                        distance = dist[make_pair(specseq[j].size()-1,specseq[i].size()-1)];
 
                         k=k*2;
                     }
                     cout << "k was " << k/2 << endl;
                 }else{
                     alignmentscore = max_seq(specseq[j],specseq[i],k);
-                    distance = dist[make_pair(specseq[j].size()-1,specseq[i].size()-specseq[j].size()+ceil(k/2)-1)];
+                    distance = dist[make_pair(specseq[j].size()-1,specseq[i].size()-1)];
                 }
                 cout << alignmentscore << endl;
                 cout << "distance between sequences is " << distance << endl;
                 trace_back(specseq[j],specseq[i]);
-                //resfile << "first sequence" << endl;
-                //resfile << aligned1 << endl;
-                //resfile << "second sequence" << endl;
-                //resfile << aligned2 << endl;
+                resfile << "first sequence" << endl;
+                resfile << aligned1 << endl;
+                resfile << "second sequence" << endl;
+                resfile << aligned2 << endl;
             }else{
                 cout << specname[i] << " " << specname[j] << endl;
                 cout << "What is the k value for these sequences? Input an integer or -1 if unknown: " << endl;
                 cin >> k;
-                    if(k == -1){
-                        k = 1;
-                        int distance = 0;
-                        while(k>distance){
-                            distance = max_seq(specseq[i],specseq[j],k);
-                            k=k*2;
-                        }
-                        alignmentscore = distance;
-                        cout << "k was " << k/2 << endl;
+                if(k == -1){
+                    k = 1;
+                    distance = 0;
+                    while(k>distance){
+                        alignmentscore = max_seq(specseq[i],specseq[j],k);
+                        distance = dist[make_pair(specseq[i].size()-1,specseq[j].size()-1)];
+
+                        k=k*2;
+                    }
+                    cout << "k was " << k/2 << endl;
                     }else{
                         alignmentscore = max_seq(specseq[i],specseq[j],k);
                     }
-                cout << alignmentscore << endl;
-                int temp = specseq[j].size()-specseq[i].size()+ceil(k/2)-1;
-                cout << "distance between sequences is " << dist[make_pair(specseq[i].size()-1,temp)] << endl;
+                cout << "Alignment score is " << alignmentscore << endl;
+                //int temp = specseq[j].size()-specseq[i].size()+ceil(k/2);
+                cout << "distance between sequences is " << dist[make_pair(specseq[i].size()-1,specseq[j].size()-1)] << endl;
                 trace_back(specseq[i],specseq[j]);
-                //resfile << "first sequence" << endl;
-                //resfile << aligned1 << endl;
-                //resfile << "second sequence" << endl;
-                //resfile << aligned2 << endl;
+                resfile << "first sequence" << endl;
+                resfile << aligned1 << endl;
+                resfile << "second sequence" << endl;
+                resfile << aligned2 << endl;
                 }
             }
         }
 
-    //resfile.close();
+    resfile.close();
 
     clock_t end = clock();
     printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
