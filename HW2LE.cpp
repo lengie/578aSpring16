@@ -24,23 +24,19 @@ using namespace std;
 
 clock_t begintime = clock();
 
-int wmatch =  3;
-int wmism  =  -1;
-int windel = -3;
-
 int dmatch =  0;
 int dmism  =  1;
 int dindel = 1;
 
 map <pair<int,int>,pair<int,int> > optPos;
-map <pair<int,int>,int> dist;
+//map <pair<int,int>,int> dist;
 string aligned1;
 string aligned2;
 
 int distance(int **score,string seq1,string seq2,int n,int m,int c){ //NOW DISTANCE NOT ALIGNMENT SCORE
 
     optPos.clear();
-    dist.clear();
+    //dist.clear();
     for(int i=0;i<=n;++i)
     {
         score[i][0]= 100; //boundary on left as later rows won't initialize
@@ -55,11 +51,11 @@ int distance(int **score,string seq1,string seq2,int n,int m,int c){ //NOW DISTA
             }else if (j==m-n+i+c){
                 score[i][j+c] = 100;
             }else {
-                int t1 = score[i-1][currgap+1] + ((seq1[i-1]==seq2[j-1]) ? dmatch:dmism); //argv[2]:argv[3]
+                int t1 = score[i-1][currgap+1] + ((seq1[i-1]==seq2[j-1]) ? dmatch:dmism);
                 int t2 = score[i][currgap] + dindel;
                 int t3 = score[i-1][currgap+2] + dindel;
                 score[i][currgap+1] = min(t1,min(t2,t3));
-                //cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
+                cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
 
                 //keeping track of the position of optimal alignment and distance
                 if(score[i][currgap+1] == t1){
@@ -114,7 +110,7 @@ void trace_back(string seq1,string seq2)
     while(relevant[0].first+relevant[0].second != 0){
         relevant.insert(relevant.begin(),
                         optPos[relevant[0]]);
-        cout << "The next position is " << optPos[relevant[0]].first << "," << optPos[relevant[0]].second << endl;
+        //cout << "The next position is " << optPos[relevant[0]].first << "," << optPos[relevant[0]].second << endl;
     }
 
     cout << "the path is " << relevant.size() << "bp long." << endl;
