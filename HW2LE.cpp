@@ -37,49 +37,49 @@ map <pair<int,int>,int> dist;
 string aligned1;
 string aligned2;
 
-int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
+int distance(int **score,string seq1,string seq2,int n,int m,int c){ //NOW DISTANCE NOT ALIGNMENT SCORE
 
     optPos.clear();
     dist.clear();
     for(int i=0;i<=n;++i)
     {
-        score[i][0]=-100; //boundary on left as later rows won't initialize
+        score[i][0]= 100; //boundary on left as later rows won't initialize
         int leftlim = max(0,i-c);
         int rightlim = min(m,m-n+i+c);
         for(int j=leftlim; j <= rightlim; ++j){
             int currgap = j-i+c;
             if (i==0){
-                score[i][j+c+1] = j*windel; //replace with argv[4]
+                score[i][j+c+1] = j*dindel; //replace with argv[4]
             }else if (j==0){
-                score[i][c-i+1] = i*windel;
+                score[i][c-i+1] = i*dindel;
             }else if (j==m-n+i+c){
-                score[i][j+c] = -100;
+                score[i][j+c] = 100;
             }else {
-                int t1 = score[i-1][currgap+1]+ ((seq1[i-1]==seq2[j-1]) ? wmatch:wmism); //argv[2]:argv[3]
-                int t2 = score[i][currgap] + windel;
-                int t3 = score[i-1][currgap+2] + windel;
-                score[i][currgap+1] = max(t1,max(t2,t3));
+                int t1 = score[i-1][currgap+1] + ((seq1[i-1]==seq2[j-1]) ? dmatch:dmism); //argv[2]:argv[3]
+                int t2 = score[i][currgap] + dindel;
+                int t3 = score[i-1][currgap+2] + dindel;
+                score[i][currgap+1] = min(t1,min(t2,t3));
                 //cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
 
                 //keeping track of the position of optimal alignment and distance
-                if(score[i][currgap+1] == t1)){
+                if(score[i][currgap+1] == t1){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-2);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)] + ( (seq1[i-1]==seq2[j-1])?dmatch:dmism);
+                    //dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)] + ( (seq1[i-1]==seq2[j-1])?dmatch:dmism);
                     //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
                 }else if(score[i][currgap+1] == t2){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-1,j-2);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-1,j-2)] + dindel;
+                    //dist[make_pair(i-1,j-1)] = dist[make_pair(i-1,j-2)] + dindel;
                     //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
-                }else if(score[i][currgap+1] == t3){
+                }else{
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-1);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-1)] + dindel;
+                    //dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-1)] + dindel;
                     //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
                 }
             }
         }
     }
 
-    cout << "getting score at " << n << " , " << c+m-n+1 << endl;
+    cout << "getting distance at " << n << " , " << c+m-n+1 << endl;
     return score[n][c+m-n+1];
 }
 
@@ -96,7 +96,7 @@ int max_seq(string seq1,string seq2,float k){
     {
         score[i]=new int[temp]; //band is m-n+2*k wide
     }
-    return alignment_score(score,seq1,seq2,n,m,c);
+    return distance(score,seq1,seq2,n,m,c);
 }
 
 void trace_back(string seq1,string seq2)
@@ -181,7 +181,6 @@ int main(int argc, char **argv)
     resfile.open("HW2-output-LEngie.txt");
 
     float k;
-    int alignmentscore;
     int distance;
 
     for(int i=0;specname.size();++i){
@@ -195,17 +194,14 @@ int main(int argc, char **argv)
                     k = 1;
                     distance = 0;
                     while(k>distance){
-                        alignmentscore = max_seq(specseq[j],specseq[i],k);
-                        distance = dist[make_pair(specseq[j].size()-1,specseq[i].size()-1)];
+                        distance = max_seq(specseq[j],specseq[i],k);
 
                         k=k*2;
                     }
                     cout << "k was " << k/2 << endl;
                 }else{
-                    alignmentscore = max_seq(specseq[j],specseq[i],k);
-                    distance = dist[make_pair(specseq[j].size()-1,specseq[i].size()-1)];
+                    distance = max_seq(specseq[j],specseq[i],k);
                 }
-                cout << alignmentscore << endl;
                 cout << "distance between sequences is " << distance << endl;
                 trace_back(specseq[j],specseq[i]);
                 resfile << "first sequence" << endl;
@@ -220,18 +216,17 @@ int main(int argc, char **argv)
                     k = 1;
                     distance = 0;
                     while(k>distance){
-                        alignmentscore = max_seq(specseq[i],specseq[j],k);
-                        distance = dist[make_pair(specseq[i].size()-1,specseq[j].size()-1)];
+                        distance = max_seq(specseq[i],specseq[j],k);
 
                         k=k*2;
                     }
                     cout << "k was " << k/2 << endl;
                     }else{
-                        alignmentscore = max_seq(specseq[i],specseq[j],k);
+                        distance = max_seq(specseq[i],specseq[j],k);
                     }
-                cout << "Alignment score is " << alignmentscore << endl;
+                cout << "Distance is " << distance << endl;
                 //int temp = specseq[j].size()-specseq[i].size()+ceil(k/2);
-                cout << "distance between sequences is " << dist[make_pair(specseq[i].size()-1,specseq[j].size()-1)] << endl;
+                //cout << "distance between sequences is " << dist[make_pair(specseq[i].size()-1,specseq[j].size()-1)] << endl;
                 trace_back(specseq[i],specseq[j]);
                 resfile << "first sequence" << endl;
                 resfile << aligned1 << endl;
