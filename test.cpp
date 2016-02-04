@@ -54,7 +54,9 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
     for(int i=0;i<=n;++i)
     {
         score[i][0]=-100; //boundary on left as later rows won't initialize
-        for(int j=max(0,i-c);j<=min(m,m-n+i+c);++j){
+        int leftlim = max(0,i-c);
+        int rightlim = min(m,m-n+i+c);
+        for(int j=leftlim; j <= rightlim; ++j){
             cout << j << endl;
             if (i==0){
                 score[i][j+c+1] = j*windel; //replace with argv[4]
@@ -67,7 +69,7 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
                 int t2 = score[i][j-(i-c)] + windel;
                 int t3 = score[i-1][j-(i-c)+2] + windel;
                 score[i][j-(i-c)+1] = max(t1,max(t2,t3));
-                cout << i << "," << j << " score is: " << score[i][j-(i-c)+1] << endl;
+                cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
 
                 //keeping track of the position of optimal alignment and distance
                 if(t1==score[i][j-(i-c)+2]){
