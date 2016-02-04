@@ -44,7 +44,7 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
     for(int i=0;i<=n;++i)
     {
         score[i][0]=-100; //boundary on left as later rows won't initialize
-        for(int j=max(0,i-c-1);j<=min(m,m-n+i+c);++j){
+        for(int j=max(0,i-c);j<=min(m,m-n+i+c);++j){
             if (i==0){
                 score[i][j+c+1] = j*windel; //replace with argv[4]
             }else if (j==0){
@@ -56,7 +56,7 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
                 score[i][j-(i-c)+2] = max(t1,max(t2,t3));
 
                 //keeping track of the position of optimal alignment and distance
-                if(t1==score[i][j-(i-c)]){
+                if(t1==score[i][j-(i-c)+2]){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-2);
                     dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)]+((seq1[i-1]==seq2[j-1]) ? dmatch:dmism);
                 }else if(t2==score[i][j-(i-c)]){
@@ -70,18 +70,21 @@ int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
         }
     }
 
-    return score[seq1.size()][seq2.size()];
+    cout << "getting score at " << n << " , " << c+m-n+1 << endl;
+    return score[n][c+m-n+1];
 }
 
 int max_seq(string seq1,string seq2,float k)
 {
     int n = seq1.size(); //should make a sequence class with names and sizes public instead of doing this
     int m = seq2.size();
-    int c = ceil(k);
+    int c = ceil(k/2);
 
     int **score;
     score = new int*[n+1]; //initializations => score has 1 more row than seq size
-    int temp = m-n+2*k+1;
+    int temp = m-n+ 2*c +2;
+    cout << "matrix size is " << temp << endl;
+
     for(int i=0;i<n+1;++i)
     {
         score[i]=new int[temp]; //band is m-n+2*k wide
@@ -183,7 +186,7 @@ int main(int argc, char **argv)
                     k = 1;
                     distance = 0;
                     while(k>distance){
-                        int temp = specseq[i].size()-specseq[j].size()+ceil(k)-1;
+                        int temp = specseq[i].size()-specseq[j].size()+ceil(k/2)-1;
 
                         alignmentscore = max_seq(specseq[j],specseq[i],k);
                         distance = dist[make_pair(specseq[j].size()-1,temp)];
@@ -193,7 +196,7 @@ int main(int argc, char **argv)
                     cout << "k was " << k/2 << endl;
                 }else{
                     alignmentscore = max_seq(specseq[j],specseq[i],k);
-                    distance = dist[make_pair(specseq[j].size()-1,specseq[i].size()-specseq[j].size()+ceil(k)-1)];
+                    distance = dist[make_pair(specseq[j].size()-1,specseq[i].size()-specseq[j].size()+ceil(k/2)-1)];
                 }
                 cout << alignmentscore << endl;
                 cout << "distance between sequences is " << distance << endl;
@@ -219,7 +222,7 @@ int main(int argc, char **argv)
                         alignmentscore = max_seq(specseq[i],specseq[j],k);
                     }
                 cout << alignmentscore << endl;
-                int temp = specseq[j].size()-specseq[i].size()+ceil(k)-1;
+                int temp = specseq[j].size()-specseq[i].size()+ceil(k/2)-1;
                 cout << "distance between sequences is " << dist[make_pair(specseq[i].size()-1,temp)] << endl;
                 trace_back(specseq[i],specseq[j]);
                 //resfile << "first sequence" << endl;
