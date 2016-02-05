@@ -19,10 +19,11 @@ Output:
 #include <ctime>
 #include <map>
 #include <math.h>
+#include <stdio.h>
 
 using namespace std;
 
-clock_t begintime = clock();
+//clock_t begintime = clock();
 
 int dmatch =  0;
 int dmism  =  1;
@@ -33,10 +34,16 @@ map <pair<int,int>,pair<int,int> > optPos;
 string aligned1;
 string aligned2;
 
-int distance(int **score,string seq1,string seq2,int n,int m,int c){ //NOW DISTANCE NOT ALIGNMENT SCORE
+float k;
+int dist;
+
+int distance(int **score,string seq1,string seq2,int n,int m,int c){
 
     optPos.clear();
     //dist.clear();
+
+    cout << "m is " << m << " and n is " << n << endl;
+
     for(int i=0;i<=n;++i)
     {
         score[i][0]= 100; //boundary on left as later rows won't initialize
@@ -46,36 +53,39 @@ int distance(int **score,string seq1,string seq2,int n,int m,int c){ //NOW DISTA
             int currgap = j-i+c;
             if (i==0){
                 score[i][j+c+1] = j*dindel; //replace with argv[4]
+                //cout << i << "," << j+c+1 << "a score is: " << score[i][j+c+1] << endl;
             }else if (j==0){
                 score[i][c-i+1] = i*dindel;
-            }else if (j==m-n+i+c){
-                score[i][j+c] = 100;
+            }else if (currgap+1>=m-n+2*c+1){
+                score[i][currgap+1] = 110;
+                //cout << i << "," << j+c << "aa score is: " << score[i][j+c] << endl;
             }else {
                 int t1 = score[i-1][currgap+1] + ((seq1[i-1]==seq2[j-1]) ? dmatch:dmism);
                 int t2 = score[i][currgap] + dindel;
                 int t3 = score[i-1][currgap+2] + dindel;
                 score[i][currgap+1] = min(t1,min(t2,t3));
-                cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
+                //cout << i << "," << j-(i-c)+1 << "aaa score is: " << score[i][j-(i-c)+1] << endl;
 
                 //keeping track of the position of optimal alignment and distance
                 if(score[i][currgap+1] == t1){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-2);
-                    //dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)] + ( (seq1[i-1]==seq2[j-1])?dmatch:dmism);
-                    //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
                 }else if(score[i][currgap+1] == t2){
                     optPos[make_pair(i-1,j-1)] = make_pair(i-1,j-2);
-                    //dist[make_pair(i-1,j-1)] = dist[make_pair(i-1,j-2)] + dindel;
-                    //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
                 }else{
                     optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-1);
-                    //dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-1)] + dindel;
-                    //cout << "i: " << i-1 << " and j: " << j-1 << dist[make_pair(i-1,j-1)] << endl;
                 }
             }
         }
     }
 
-    cout << "getting distance at " << n << " , " << c+m-n+1 << endl;
+    /* Printing the distance matrix to test
+    for(int i = 0; i <= n; i++) {
+        for(int j = 0; j <= m-n+2*c+1; j++) {
+            printf("%3d ", score[i][j]);
+        }
+        printf("\n");
+    }*/
+
     return score[n][c+m-n+1];
 }
 
@@ -95,40 +105,9 @@ int max_seq(string seq1,string seq2,float k){
     return distance(score,seq1,seq2,n,m,c);
 }
 
-void trace_back(string seq1,string seq2)
-{
-    int n = seq1.size(); //just so I don't have to type this a bunch of times
-    int m = seq2.size();
+void trace_back(string seq1,string seq2);
 
-    aligned1 = "";
-    aligned2 = "";
-
-    //Starting the traceback from the last element
-    vector<pair<int,int> > relevant;
-    relevant.push_back(make_pair(n-1,m-1)); //corresponds to sequence index, not score index
-
-    while(relevant[0].first+relevant[0].second != 0){
-        relevant.insert(relevant.begin(),
-                        optPos[relevant[0]]);
-        //cout << "The next position is " << optPos[relevant[0]].first << "," << optPos[relevant[0]].second << endl;
-    }
-
-    cout << "the path is " << relevant.size() << "bp long." << endl;
-
-    for(int i=0;i<relevant.size();++i)
-    {
-        if (relevant[i].first == relevant[i-1].first){
-            aligned1.append("-");
-            aligned2.push_back(seq2[i]);
-        }else if(relevant[i].second == relevant[i-1].second){
-            aligned1.push_back(seq1[i]);
-            aligned2.append("-");
-        }else{
-            aligned1.push_back(seq1[i]);
-            aligned2.push_back(seq2[i]);
-        }
-    }
-}
+int align(string name1, string name2, string seq1, string seq2);
 
 //argv[1]:string file, argv[2] int wmatch, argv[3] int wmism, argv[4] int windel
 int main(int argc, char **argv)
@@ -141,14 +120,14 @@ int main(int argc, char **argv)
     //Each file has multiple sequences, first line is species name and next lines are sequence
     ifstream openfile;
     //openfile.open(argv[1]);
-    openfile.open("HW1-File1.txt");
+    openfile.open("sample.txt");
 
     string read_lines;
     string appending;
 
+    openfile >> read_lines;
     while (!openfile.eof()) // or, if(!openread.fail())?
     {
-        openfile >> read_lines;
         /* Note to self: >> is enough to acquire line up to first space.
         Don't use getline because it will make a new line if there's nothing
         on the current line, or may mess with spaces and such
@@ -168,75 +147,106 @@ int main(int argc, char **argv)
         {
             appending.append(read_lines);
         }
+        openfile >> read_lines;
     }
     //must pushback or will miss the sequence of the final species
     specseq.push_back(appending);
     openfile.close();
 
     ofstream resfile;
-    resfile.open("HW2-output-LEngie.txt");
-
-    float k;
-    int distance;
 
     for(int i=0;specname.size();++i){
         for(int j=i+1;j<specname.size();++j){
             //The first dimension should be smaller than the second
             if(specseq[i].size()>specseq[j].size()){
-                cout << specname[j] << " " << specname[i] << endl;
-                cout << "What is the k value for these sequences? Input an integer or -1 if unknown: " << endl;
-                cin >> k;
-                if(k == -1){
-                    k = 1;
-                    distance = 0;
-                    while(k>distance){
-                        distance = max_seq(specseq[j],specseq[i],k);
+                dist = align(specname[j],specname[i],specseq[j],specseq[i]);
+                cout << "The distance between sequences is " << dist << endl;
 
-                        k=k*2;
-                    }
-                    cout << "k was " << k/2 << endl;
-                }else{
-                    distance = max_seq(specseq[j],specseq[i],k);
-                }
-                cout << "distance between sequences is " << distance << endl;
                 trace_back(specseq[j],specseq[i]);
-                resfile << "first sequence" << endl;
-                resfile << aligned1 << endl;
-                resfile << "second sequence" << endl;
-                resfile << aligned2 << endl;
-            }else{
-                cout << specname[i] << " " << specname[j] << endl;
-                cout << "What is the k value for these sequences? Input an integer or -1 if unknown: " << endl;
-                cin >> k;
-                if(k == -1){
-                    k = 1;
-                    distance = 0;
-                    while(k>distance){
-                        distance = max_seq(specseq[i],specseq[j],k);
 
-                        k=k*2;
-                    }
-                    cout << "k was " << k/2 << endl;
-                    }else{
-                        distance = max_seq(specseq[i],specseq[j],k);
-                    }
-                cout << "Distance is " << distance << endl;
+            }else{
+                dist = align(specname[i],specname[j],specseq[i],specseq[j]);
+                cout << "Distance is " << dist << endl;
                 //int temp = specseq[j].size()-specseq[i].size()+ceil(k/2);
                 //cout << "distance between sequences is " << dist[make_pair(specseq[i].size()-1,specseq[j].size()-1)] << endl;
                 trace_back(specseq[i],specseq[j]);
-                resfile << "first sequence" << endl;
-                resfile << aligned1 << endl;
-                resfile << "second sequence" << endl;
-                resfile << aligned2 << endl;
-                }
             }
+            resfile << "sequence " << i << " and " << j << endl;
+            resfile << aligned1 << endl;
+            resfile << "second sequence of the pair" << endl;
+            resfile << aligned2 << endl;
         }
-
+    }
     resfile.close();
 
-    clock_t end = clock();
-    printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
+    //clock_t end = clock();
+    //printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
     return 0;
 }
 
+int align(string name1, string name2, string seq1, string seq2){
+    cout << name1 << " " << name2 << endl;
+    cout << "What is the k value for these sequences? Input an integer or -1 if unknown: " << endl;
+    cin >> k;
+
+    if(k == -1){
+        k = 1;
+        dist = 10;
+        while(k<dist){
+            dist = max_seq(seq1,seq2,k);
+
+            k=k*2;
+        }
+        cout << "k was " << k/2 << endl;
+        return dist;
+    }else{
+        return max_seq(seq1,seq2,k);
+    }
+}
+
+
+void trace_back(string seq1,string seq2){
+    int n = seq1.size(); //just so I don't have to type this a bunch of times
+    int m = seq2.size();
+
+    aligned1 = "";
+    aligned2 = "";
+
+    //Starting the traceback from the last element
+    vector<pair<int,int> > relevant;
+    relevant.push_back(make_pair(n-1,m-1)); //corresponds to sequence index, not score index
+    cout << "The next position is " << relevant[0].first << "," << relevant[0].second<<endl;
+
+    while(relevant[0].first+relevant[0].second != 0){
+        relevant.insert(relevant.begin(),
+                        optPos[relevant[0]]);
+        cout << "The next position is " << optPos[relevant[0]].first << "," << optPos[relevant[0]].second << endl;
+        /*if ((relevant[0].first == relevant[1].first-1)&&(relevant[0].second == relevant[1].second-1)){
+            aligned1.push_back(seq1[relevant[0].first]);
+            aligned2.push_back(seq2[relevant[0].second]);
+        }else if(relevant[0].second == relevant[1].second-1){
+            aligned1.push_back(seq1[relevant[0].first]);
+            aligned2.append("-");
+        }else{
+            aligned1.append("-");
+            aligned2.push_back(seq1[relevant[0].second]);}*/
+        }
+
+    for(int i=0;i<relevant.size();++i){
+        if (relevant[i].first == relevant[i-1].first){
+            aligned1.append("-");
+            aligned2.push_back(seq2[i]);
+        }else if(relevant[i].second == relevant[i-1].second){
+            aligned1.push_back(seq1[i]);
+            aligned2.append("-");
+        }else{
+            aligned1.push_back(seq1[i]);
+            aligned2.push_back(seq2[i]);
+        }
+    }
+    cout << "First sequence aligned: " << endl;
+    cout << aligned1 << endl;
+    cout << "Second sequence aligned: " << endl;
+    cout << aligned2 << endl;
+}
 //I should probably practice using classes instead of having everything be public
