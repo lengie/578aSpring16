@@ -61,15 +61,15 @@ int distance(int **score,string seq1,string seq2,int n,int m,int c){
                 int t2 = score[i][currgap] + dindel;
                 int t3 = score[i-1][currgap+2] + dindel;
                 score[i][currgap+1] = min(t1,min(t2,t3));
-                //cout << i << "," << j-(i-c)+1 << "aaa score is: " << score[i][j-(i-c)+1] << endl;
+                //cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
 
                 //keeping track of the position of optimal alignment and distance
                 if(score[i][currgap+1] == t1){
-                    optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-2);
+                    optPos[make_pair(i-1,j-1)] = make_pair(max(0,i-2),max(0,j-2));
                 }else if(score[i][currgap+1] == t2){
-                    optPos[make_pair(i-1,j-1)] = make_pair(i-1,j-2);
+                    optPos[make_pair(i-1,j-1)] = make_pair(i-1,max(0,j-2));
                 }else{
-                    optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-1);
+                    optPos[make_pair(i-1,j-1)] = make_pair(max(0,i-2),j-1);
                 }
             }
         }
@@ -121,9 +121,10 @@ int main(int argc, char **argv)
     string read_lines;
     string appending;
 
-    openfile >> read_lines;
+
     while (!openfile.eof()) // or, if(!openread.fail())?
     {
+        openfile >> read_lines;
         /* Note to self: >> is enough to acquire line up to first space.
         Don't use getline because it will make a new line if there's nothing
         on the current line, or may mess with spaces and such
@@ -143,7 +144,7 @@ int main(int argc, char **argv)
         {
             appending.append(read_lines);
         }
-        openfile >> read_lines;
+        //openfile >> read_lines;
     }
     //must pushback or will miss the sequence of the final species
     specseq.push_back(appending);
@@ -225,6 +226,8 @@ void trace_back(string seq1,string seq2){
         printf("%3d %3d", relevant[i].first, relevant[i].second);
         printf("\n");
     }*/
+
+    //cout << "path is " << relevant.size() << "long."<<endl;
 
     for(int i=0;i<relevant.size();++i){
         if (relevant[i].first == 0 && relevant[i].second == 0){
