@@ -17,6 +17,7 @@ Output:
 #include <string.h>
 #include <algorithm>
 #include <ctime>
+#include <map>
 
 using namespace std;
 
@@ -26,7 +27,7 @@ int wmatch =  3;
 int wmism  =  -1;
 int windel = -3;
 
-vector<pair<int,int> > optPos; //look into making this a hash map
+map <pair<int,int>,pair<int,int> > optPos;
 string aligned1;
 string aligned2;
 
@@ -53,18 +54,14 @@ int alignment_score(int **score,string seq1,string seq2){
 
                 //keeping track of the position of optimal alignment
                 if(t1==score[i][j]){
-                    optPos.push_back(make_pair(i-1,j-1));
+                    optPos[make_pair(i,j)] = make_pair(i-1,j-1);
                 }else if(t2==score[i][j]){
-                    optPos.push_back(make_pair(i,optPos[optPos.size()-1].second));
+                    optPos[make_pair(i,j)] = make_pair(i,j-1);
                 }else{
-                    optPos.push_back(make_pair(optPos[optPos.size()-1].first,j));}
+                    optPos[make_pair(i,j)] = make_pair(i-1,j);}
             }
         }
     }
-    //cout << optPos.size() << endl;
-    cout << optPos[30579].first << " " << optPos[30579].second << endl; //Just testing
-    cout << optPos[30458].first << " " << optPos[30458].second << endl; //These two numbers are cycling in traceback
-
     return score[seq1.size()][seq2.size()];
 }
 
@@ -85,31 +82,34 @@ void trace_back(string seq1,string seq2)
     aligned2 = "";
 
     //Starting the traceback from the last element
-    //Technically I could just trace through the max score values instead of making the pairs in the first place
-    long long int current = optPos.size()-1;
     vector<pair<int,int> > relevant;
+    relevant.push_back(make_pair(seq1.size(),seq2.size()));
 
-    while(current != 0){
-        relevant.push_back(optPos[current]);
-        //THE FOLLOWING LINE CONTAINS THE CURRENT PROBLEM
-        current = (optPos[current].first)*(seq1.size()-1) + optPos[current].second;
-        //cout << current << endl;
-    }
-    for(int i=0;i<relevant.size();++i) //(0,1)?
-    {
-        if (relevant[i].first == relevant[i-1].first){
-            aligned1.append("-");
-            aligned2.push_back(seq2[i]);
+    while(relevant[0].first + relevant[0].second != 0){
+        relevant.insert(relevant.begin(),
+                        optPos[relevant[0]]);
+        //cout << "The next position is " << optPos[relevant[0]].first << "," << optPos[relevant[0]].second << endl;
+        }
+
+    for(int i=0;i<relevant.size();++i){
+        if (relevant[i].first == 0 && relevant[i].second == 0){
+            aligned1.push_back(seq1[relevant[i].first]);
+            aligned2.push_back(seq2[relevant[i].second]);
+        }else if (relevant[i].first == relevant[i-1].first){
+            aligned1.push_back('-');
+            aligned2.push_back(seq2[relevant[i].second]);
         }else if(relevant[i].second == relevant[i-1].second){
-            aligned1.push_back(seq1[i]);
-            aligned2.append("-");
+            aligned1.push_back(seq1[relevant[i].first]);
+            aligned2.push_back('-');
         }else{
-            aligned1.push_back(seq1[i]);
-            aligned2.push_back(seq2[i]);
+            aligned1.push_back(seq1[relevant[i].first]);
+            aligned2.push_back(seq2[relevant[i].second]);
         }
     }
-    cout << aligned1.size() << endl;
-    cout << aligned2.size() << endl;
+    cout << "First sequence aligned: " << endl;
+    cout << aligned1 << endl;
+    cout << "Second sequence aligned: " << endl;
+    cout << aligned2 << endl;
 }
 
 //argv[1]:string file, argv[2] int wmatch, argv[3] int wmism, argv[4] int windel
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
     //Each file has multiple sequences, first line is species name and next lines are sequence
     ifstream openfile;
     //openfile.open(argv[1]);
-    openfile.open("HW1-File1.txt");
+    openfile.open("HW1-File2.txt");
 
     string read_lines;
     string appending;
@@ -167,11 +167,11 @@ int main(int argc, char **argv)
     for(int i=0; i<specname.size();i++){
         cout << specseq[i]<<endl;}*/
 
-    //ofstream resfile;
-    //resfile.open("HW1-output-LEngie.txt");
+    ofstream resfile;
+    resfile.open("HW1-output2-LEngie.txt");
 
-    for(int i=0;i<1;i++){//specname.size();++i){
-            for(int j=0;j<2;j++)//specname.size();++j)
+    for(int i=0;i<specname.size();++i){
+            for(int j=i+1;j<specname.size();++j)
             {
                 if(i!=j)
                 {
@@ -182,15 +182,15 @@ int main(int argc, char **argv)
                 align.alignmentscore = max_seq(specseq[i],specseq[j]);
                 cout << align.alignmentscore << endl;
                 trace_back(specseq[i],specseq[j]);
-                //resfile << "first sequence" << endl;
-                //resfile << aligned1 << endl;
-                //resfile << "second sequence" << endl;
-                //resfile << aligned2 << endl;
+                resfile << "first sequence" << endl;
+                resfile << aligned1 << endl;
+                resfile << "second sequence" << endl;
+                resfile << aligned2 << endl;
                 }
             }
         }
 
-    //resfile.close();
+    resfile.close();
 
     clock_t end = clock();
     printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
