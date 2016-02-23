@@ -1,19 +1,22 @@
-/*    Purpose: Naive implementation of pattern matching.
- *    Created by Liana Engie, February 2016
- *
- *    Input: P, pattern and T, fasta file containing text string to be matched against
- *    Output: All starting positions of substrings in T that exactly match P
+/*
+MATH578a Spring 2016 Unit2 HW1 - Liana Engie
+Purpose: Naive implementation of pattern matching.
+Input:
+    P, pattern
+    T, fasta file containing text string to be matched against
+Output:
+    All starting positions of substrings in T that exactly match P
  */
 
 #include <iostream>
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <cassert>
 
-using std::vector;
-using std::string;
-using std::cout;
-using std::endl;
+using namespace std;
 
 static void
 read_fasta_file_single_sequence(const string &filename, string &T) {
@@ -27,29 +30,35 @@ read_fasta_file_single_sequence(const string &filename, string &T) {
 }
 
 int main(int argc, const char * const argv[]) {
+    /*
+    //Testing on a string T, not fasta file
+    const string P(argv[1]), T(argv[2]);
+    const size_t n = P.length();
+    const size_t m = T.length();*/
+
     const string P(argv[1]), filename(argv[2]);
     const size_t n = P.length();
 
-    const string P(argv[1]), filename(argv[2]);
-
-    string T;
-    read_fasta_file_single_sequence(filename, T);
-    assert(P.length() <= T.length());
-
     if (argc != 3) {
-        std::cerr << "usage: " << argv[0] << " <PATTERN> <TEXT>" << endl;
+        std::cerr << "usage: " << argv[0] << " <PATTERN> <FILE-NAME>" << endl;
         return EXIT_FAILURE;
     }
 
+    string T;
+    read_fasta_file_single_sequence(filename, T);
+    assert(n <= m);
+
+
+
     for(int j=0;j<m-n;++j){ //Could(should?) also use size_t for count here
-        k = 0;
+        size_t k = 0;
         for(int i=0;i<n;++i){
-            if P[i]=t[j+i-1]{
+            if (P[i]==T[j+i]){
                 k=k+1;
             }
         }
         if(k==n){
-            cout << "There's a matching occurence starting at " << j << endl;
+            cout << "There's a matching occurence starting at " << j+1 << endl;
         }
     }
 }
