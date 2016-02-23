@@ -16,6 +16,8 @@ Output:
 #include <fstream>
 #include <cassert>
 
+clock_t begintime = clock();
+
 using namespace std;
 
 static void
@@ -35,7 +37,6 @@ int main(int argc, const char * const argv[]) {
     const string P(argv[1]), T(argv[2]);
     const size_t n = P.length();
     const size_t m = T.length();*/
-
     const string P(argv[1]), filename(argv[2]);
     const size_t n = P.length();
 
@@ -46,9 +47,8 @@ int main(int argc, const char * const argv[]) {
 
     string T;
     read_fasta_file_single_sequence(filename, T);
+    const size_t m = T.length();
     assert(n <= m);
-
-
 
     for(int j=0;j<m-n;++j){ //Could(should?) also use size_t for count here
         size_t k = 0;
@@ -61,4 +61,7 @@ int main(int argc, const char * const argv[]) {
             cout << "There's a matching occurence starting at " << j+1 << endl;
         }
     }
+
+    clock_t end = clock();
+    printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
 }
