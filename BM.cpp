@@ -66,30 +66,43 @@ match(const string &s, size_t q, const size_t n) {
   return q;
 }
 
-static void good_suffix(const string &Lprime){
-  size_t l = 0, r = 0;
-  for (size_t k = 1; k < s.length(); ++k) {
-    if (k >= r) { // Case 1: full comparison
-      Lprime[k] = match(s, 0, k);
-      if (Lprime[k] > 0) {
-        r = k + Lprime[k];
-        l = k;
-      }
+static void reverseZ(vector<size_t> &N, const string &P){
+    n = P.size();
+    for(size_t k=0;k<n;++k){
+        Pr[n-k-1] = P[i];
     }
-    else { // Case 2: (we are inside a Z-box)
-      const size_t k_prime = k - l;
-      const size_t beta_len = r - k;
-      if (Lprime[k_prime] < beta_len) { // Case 2a: stay inside Z-box
-        Lprime[k] = Lprime[k_prime];
-      }
-      else {  // Case 2b: need to match outside the Z-box
-        const size_t q = match(s, r, beta_len);
-        Lprime[k] = q - k;
-        r = q;
-        l = k;
-      }
+
+    size_t l = 0, r = 0;
+    for (size_t k = 1; k < n; ++k) {
+        if (k >= r) { // Case 1: full comparison
+            N[k] = match(Pr, 0, k);
+            if (N[k] > 0) {
+                r = k + N[k];
+                l = k;
+            }
+        }
+        else { // Case 2: (we are inside a Z-box)
+            const size_t k_prime = k - l;
+            const size_t beta_len = r - k;
+            if (N[k_prime] < beta_len) { // Case 2a: stay inside Z-box
+                N[k] = N[k_prime];
+            }
+            else {  // Case 2b: need to match outside the Z-box
+                const size_t q = match(Pr, r, beta_len);
+                N[k] = q - k;
+                r = q;
+                l = k;
+            }
+        }
     }
-  }
+    P = Pr; //Difference between &P = &Pr? test this later
+}
+
+static void good_suffix(vector<size_t> &Lprime,const string &N, const size_t n){
+    for(size_t j = 0; i<n; ++i){ //n-1?
+        size_t i = n-N[j];
+        Lprime[i] = j;
+    }
 }
 
 static void
@@ -123,12 +136,20 @@ int main(int argc, const char * const argv[]) {
         vector<int> t;
     } Rlist;
 
+    //Setting up extended bad character rule
     create_Rlist(P,Rlist)
 
-    vector<size_t> Lprime(n); //from the pattern?
-    good_suffix(Lprime);
+    //Setting up good suffix rule
+    vector<size_t> N(n);
+    reverseZ(N,P);
 
-    for(int i=0;i<m-n;){
+    vector<size_t> Lprime(n,0); //should be a constant or not?
+    good_suffix(Lprime,N,n);
+
+    vector<size_t> l(n,0);
+    //largest suffix of P[i...n] that is also a prefix of P
+
+    /*for(int i=0;i<m-n;){
         size_t k=0;
         for(int j=n-1;j=0,--j){
             if(P[j]=T[j+i]){
@@ -142,6 +163,22 @@ int main(int argc, const char * const argv[]) {
         if(k==n){
             cout << "There's a matching occurrence starting at " << j+1 << endl;
             i=i+n;
+        }
+    }*/
+
+    size_t k =0;
+    while(k<=m){
+        size_t i = n;
+        size_t h = k;
+        while(i>0 && P[i] = T[h]){
+            i = i-1;
+            h = h-1;
+        }
+        if(i=0){
+            cout << "There's a matching occurrence starting at " << k+1 << endl;
+            k=k_n-l(1);
+        }else{
+            //shift P (increase k) by the max amunt determined by extended bad char rule and good suffix rule
         }
     }
 
