@@ -47,6 +47,7 @@ int main(int argc, const char * const argv[]) {
     assert(n <= m);
 
     size_t matches = 0;
+    size_t comparisons =0;
 
     for(int j=0;j<m-n;++j){ //Could(should?) also use size_t for count here
         size_t k = 0;
@@ -54,6 +55,7 @@ int main(int argc, const char * const argv[]) {
             if (P[i]==T[j+i]){
                 k=k+1;
             }
+            ++comparisons;
         }
         if(k==n){
             //cout << j+1 << ", ";
@@ -61,4 +63,5 @@ int main(int argc, const char * const argv[]) {
         }
     }
     cout << "Number of matches: " << matches << endl;
+    cout << "Number of comparisons: " << comparisons << endl;
 }

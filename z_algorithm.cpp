@@ -22,9 +22,9 @@ using std::endl;
 //clock_t begintime = clock();
 
 static size_t
-match(const string &s, size_t q, const size_t n) {
+match(const string &s, size_t q, const size_t n, size_t &comparisons) {
   for (size_t i = n; std::max(q, i) < s.length() &&
-         (s[i] == s[q]); ++i, ++q);
+         (s[i] == s[q]); ++i, ++q, ++comparisons);
   return q;
 }
 
@@ -57,13 +57,14 @@ int main(int argc, const char * const argv[]) {
   vector<size_t> Z(s.length());
 
   size_t matches=0;
+  size_t comparisons = 0;
 
 //cout << "There are occurrences of the pattern at " << endl;
 
   size_t l = 0, r = 0;
   for (size_t k = 1; k < s.length(); ++k) {
     if (k >= r) { // Case 1: full comparison
-      Z[k] = match(s, 0, k);
+      Z[k] = match(s, 0, k, comparisons);
       if (Z[k] > 0) {
         r = k + Z[k];
         l = k;
@@ -84,7 +85,7 @@ int main(int argc, const char * const argv[]) {
         }
       }
       else {  // Case 2b: need to match outside the Z-box
-        const size_t q = match(s, r, beta_len);
+        const size_t q = match(s, r, beta_len,comparisons);
         Z[k] = q - k;
         if(Z[k]>=n){
             //cout << k+1-n << ", ";
@@ -96,7 +97,7 @@ int main(int argc, const char * const argv[]) {
     }
   }
 cout << "Number of matches: "  << matches << endl;
-
+cout << "Number of comparisons: " << comparisons << endl;
 //    clock_t end = clock();
 //   printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
 

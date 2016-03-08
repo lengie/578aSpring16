@@ -24,7 +24,7 @@ using std::cout;
 using std::endl;
 
 static void
-compute_prefix_function(const string &P, vector<size_t> &sp) {
+compute_prefix_function(const string &P, vector<size_t> &sp, size_t &comparisons) {
   const size_t n = P.length();
   sp.resize(n, 0);
 
@@ -34,13 +34,13 @@ compute_prefix_function(const string &P, vector<size_t> &sp) {
     size_t inner_loops = 0;
     while (k > 0 && P[k] != P[i])
       k = sp[k - 1];
+      ++comparisons;
 
     if (P[k] == P[i]) ++k;
 
     sp[i] = k;
   }
 }
-
 
 static void
 Knuth_Morris_Pratt(const string &T, const string &P, const vector<size_t> &sp,
@@ -56,7 +56,7 @@ Knuth_Morris_Pratt(const string &T, const string &P, const vector<size_t> &sp,
     // of P[1..j - 1] AND has a different next character
     while (j > 0 && P[j] != T[i])
       j = sp[j - 1];
-
+      ++comparisons;
     // check if the character matches
     if (P[j] == T[i]) ++j;
 
@@ -70,8 +70,6 @@ Knuth_Morris_Pratt(const string &T, const string &P, const vector<size_t> &sp,
   }
 }
 
-
-
 static void
 read_fasta_file_single_sequence(const string &filename, string &T) {
 
@@ -82,7 +80,6 @@ read_fasta_file_single_sequence(const string &filename, string &T) {
   while (in >> line)
     T += line;
 }
-
 
 int
 main(int argc, const char * const argv[]) {
@@ -102,11 +99,13 @@ main(int argc, const char * const argv[]) {
 
   // preprocess the pattern "P"
   vector<size_t> sp;
-  compute_prefix_function(P, sp);
+  compute_prefix_function(P, sp, comparisons);
 
   /*cout << "P:\t" << argv[1] << endl;
   for (size_t i = 0; i < sp.size(); ++i)
     cout << i + 1 << "\t" << sp[i] << endl;*/
+
+  size_t comparisons = 0;
 
   // use the KMP scan procedure to find matches of "P" in text "T"
   vector<size_t> matches;
@@ -114,6 +113,8 @@ main(int argc, const char * const argv[]) {
 
   // output the results
   cout << endl << "MATCH COUNT:\t" << matches.size() << endl;
+  cout << "Number of comparisons: " << comparisons << endl;
+
 
   return EXIT_SUCCESS;
 }
