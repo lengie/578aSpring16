@@ -23,12 +23,6 @@ using std::string;
 using std::cout;
 using std::endl;
 
-
-/*
- * This function computes the "prefix" function for the pattern "P"
- * which is the same as the sp (note: not sp') values in Gusfield's
- * book.
- */
 static void
 compute_prefix_function(const string &P, vector<size_t> &sp) {
   const size_t n = P.length();
@@ -110,9 +104,9 @@ main(int argc, const char * const argv[]) {
   vector<size_t> sp;
   compute_prefix_function(P, sp);
 
-  cout << "P:\t" << argv[1] << endl;
+  /*cout << "P:\t" << argv[1] << endl;
   for (size_t i = 0; i < sp.size(); ++i)
-    cout << i + 1 << "\t" << sp[i] << endl;
+    cout << i + 1 << "\t" << sp[i] << endl;*/
 
   // use the KMP scan procedure to find matches of "P" in text "T"
   vector<size_t> matches;

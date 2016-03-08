@@ -19,7 +19,7 @@ using std::string;
 using std::cout;
 using std::endl;
 
-clock_t begintime = clock();
+//clock_t begintime = clock();
 
 static size_t
 match(const string &s, size_t q, const size_t n) {
@@ -56,8 +56,9 @@ int main(int argc, const char * const argv[]) {
 
   vector<size_t> Z(s.length());
 
-  //cout << "k" << "\t" << "l" << "\t" << "r" << "\t" << "Z[k]" << endl;
-cout << "There are occurrences of the pattern at " << endl;
+  size_t matches=0;
+
+//cout << "There are occurrences of the pattern at " << endl;
 
   size_t l = 0, r = 0;
   for (size_t k = 1; k < s.length(); ++k) {
@@ -67,7 +68,8 @@ cout << "There are occurrences of the pattern at " << endl;
         r = k + Z[k];
         l = k;
         if(Z[k]>=n){
-            cout << k+1-n << ", ";
+            //cout << k+1-n << ", ";
+            ++matches;
         }
       }
     }
@@ -77,26 +79,26 @@ cout << "There are occurrences of the pattern at " << endl;
       if (Z[k_prime] < beta_len) { // Case 2a: stay inside Z-box
         Z[k] = Z[k_prime];
         if(Z[k]>=n){
-            cout << k+1-n << ", ";
+            //cout << k+1-n << ", ";
+            ++matches;
         }
       }
       else {  // Case 2b: need to match outside the Z-box
         const size_t q = match(s, r, beta_len);
         Z[k] = q - k;
         if(Z[k]>=n){
-            cout << k+1-n << ", ";
+            //cout << k+1-n << ", ";
+            ++matches;
         }
         r = q;
         l = k;
       }
     }
-    //cout << k + 1 << "\t" << l + 1 << "\t" << r << "\t"
-         //<< Z[k] << "\t" << the_case << endl;
   }
+cout << "Number of matches: "  << matches << endl;
 
-
-    clock_t end = clock();
-    printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
+//    clock_t end = clock();
+//   printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
 
   return EXIT_SUCCESS;
 }

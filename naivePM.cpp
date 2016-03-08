@@ -16,8 +16,6 @@ Output:
 #include <fstream>
 #include <cassert>
 
-clock_t begintime = clock();
-
 using namespace std;
 
 static void
@@ -32,12 +30,8 @@ read_fasta_file_single_sequence(const string &filename, string &T) {
 }
 
 int main(int argc, const char * const argv[]) {
-    /*
-    //Testing on a string T, not fasta file
-    const string P(argv[1]), T(argv[2]);
-    const size_t n = P.length();
-    const size_t m = T.length();*/
-    cout << "There's a matching occurrence starting at ";
+
+    //cout << "There's a matching occurrence starting at ";
 
     const string P(argv[1]), filename(argv[2]);
     const size_t n = P.length();
@@ -52,6 +46,8 @@ int main(int argc, const char * const argv[]) {
     const size_t m = T.length();
     assert(n <= m);
 
+    size_t matches = 0;
+
     for(int j=0;j<m-n;++j){ //Could(should?) also use size_t for count here
         size_t k = 0;
         for(int i=0;i<n;++i){
@@ -60,10 +56,9 @@ int main(int argc, const char * const argv[]) {
             }
         }
         if(k==n){
-            cout << j+1 << ", ";
+            //cout << j+1 << ", ";
+            ++matches;
         }
     }
-
-    clock_t end = clock();
-    printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
+    cout << "Number of matches: " << matches << endl;
 }
