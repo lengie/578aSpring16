@@ -37,6 +37,8 @@ int main(int argc, const char * const argv[]) {
     const string P(argv[1]), T(argv[2]);
     const size_t n = P.length();
     const size_t m = T.length();*/
+    cout << "There's a matching occurrence starting at ";
+
     const string P(argv[1]), filename(argv[2]);
     const size_t n = P.length();
 
@@ -58,7 +60,7 @@ int main(int argc, const char * const argv[]) {
             }
         }
         if(k==n){
-            cout << "There's a matching occurence starting at " << j+1 << endl;
+            cout << j+1 << ", ";
         }
     }
 

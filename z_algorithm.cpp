@@ -66,8 +66,8 @@ cout << "There are occurrences of the pattern at " << endl;
       if (Z[k] > 0) {
         r = k + Z[k];
         l = k;
-        if(Z[k]>=n-1){
-            cout << k+1 << ", ";
+        if(Z[k]>=n){
+            cout << k+1-n << ", ";
         }
       }
     }
@@ -76,15 +76,15 @@ cout << "There are occurrences of the pattern at " << endl;
       const size_t beta_len = r - k;
       if (Z[k_prime] < beta_len) { // Case 2a: stay inside Z-box
         Z[k] = Z[k_prime];
-        if(Z[k]>=n-1){
-            cout << k+1 << ", ";
+        if(Z[k]>=n){
+            cout << k+1-n << ", ";
         }
       }
       else {  // Case 2b: need to match outside the Z-box
         const size_t q = match(s, r, beta_len);
         Z[k] = q - k;
-        if(Z[k]>=n-1){
-            cout << k+1 << ", ";
+        if(Z[k]>=n){
+            cout << k+1-n << ", ";
         }
         r = q;
         l = k;
