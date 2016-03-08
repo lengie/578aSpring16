@@ -16,12 +16,10 @@ Output:
 #include <fstream>
 #include <cassert>
 
-clock_t begintime = clock();
-
 using namespace std;
 
 static void create_Rlist(const string &P, struct &Rlist){
-    for(size_t i=P.size()-1; i=0; --i){
+    for(size_t i=P.size()-1; i>=0; --i){
         if(s[i]=='A'){
             Rlist.a.push_back(i);
         }
@@ -37,7 +35,6 @@ static void create_Rlist(const string &P, struct &Rlist){
     }
 }
 static int lookupR(struct &Rlist, size_t &pos, char bp){
- //Is it possible to do a binary search on a struct?
     size_t i = 0;
     if(bp=='A'){
         while(Rlist.a[i]<=pos){
@@ -45,7 +42,7 @@ static int lookupR(struct &Rlist, size_t &pos, char bp){
         }
     } else if(bp=='C'){
         while(Rlist.c[i]<=pos){
-                ++i;
+            ++i;
             }
     } else if(bp=='G'){
         while(Rlist.g[i]<=pos){
@@ -60,13 +57,13 @@ static int lookupR(struct &Rlist, size_t &pos, char bp){
 }
 
 static size_t
-match(const string &s, size_t q, const size_t n) {
+match(const string &s, size_t q, const size_t n, size_t &comparisons) {
   for (size_t i = n; max(q, i) < s.length() &&
-         (s[i] == s[q]); ++i, ++q);
+         (s[i] == s[q]); ++i, ++q, ++comparisons);
   return q;
 }
 
-static void reverseZ(vector<size_t> &N, const string &P){
+static void reverseZ(vector<size_t> &N, const string &P, size_t &comparisons){
     n = P.size();
     for(size_t k=0;k<n;++k){
         Pr[n-k-1] = P[i];
@@ -74,28 +71,27 @@ static void reverseZ(vector<size_t> &N, const string &P){
 
     size_t l = 0, r = 0;
     for (size_t k = 1; k < n; ++k) {
-        if (k >= r) { // Case 1: full comparison
-            N[k] = match(Pr, 0, k);
+        if (k >= r) {
+            N[k] = match(Pr, 0, k, comparisons);
             if (N[k] > 0) {
                 r = k + N[k];
                 l = k;
             }
         }
-        else { // Case 2: (we are inside a Z-box)
+        else {
             const size_t k_prime = k - l;
             const size_t beta_len = r - k;
-            if (N[k_prime] < beta_len) { // Case 2a: stay inside Z-box
+            if (N[k_prime] < beta_len) {
                 N[k] = N[k_prime];
             }
-            else {  // Case 2b: need to match outside the Z-box
-                const size_t q = match(Pr, r, beta_len);
+            else {
+                const size_t q = match(Pr, r, beta_len, comparisons);
                 N[k] = q - k;
                 r = q;
                 l = k;
             }
         }
     }
-    P = Pr; //Difference between &P = &Pr? test this later
 }
 
 static void good_suffix(vector<size_t> &Lprime,const string &N, const size_t n){
@@ -103,6 +99,11 @@ static void good_suffix(vector<size_t> &Lprime,const string &N, const size_t n){
         size_t i = n-N[j];
         Lprime[i] = j;
     }
+}
+
+static void sufpref(vector<size_t> &lprime, const string &P, const size_t n){
+    //largest suffix of P[i...n] that is also a prefix of P
+
 }
 
 static void
@@ -136,20 +137,24 @@ int main(int argc, const char * const argv[]) {
         vector<int> t;
     } Rlist;
 
+    size_t matches=0;
+    size_t comparisons =0;
+
     //Setting up extended bad character rule
     create_Rlist(P,Rlist)
 
     //Setting up good suffix rule
     vector<size_t> N(n);
-    reverseZ(N,P);
+    reverseZ(N,P,comparisons);
 
     vector<size_t> Lprime(n,0); //should be a constant or not?
     good_suffix(Lprime,N,n);
 
     vector<size_t> l(n,0);
     //largest suffix of P[i...n] that is also a prefix of P
+    sufpref(lprime,n);
 
-    /*for(int i=0;i<m-n;){
+    /*for(int i=0;i<m-n;){ //I wrote this framework before reading all the way through the book chapter
         size_t k=0;
         for(int j=n-1;j=0,--j){
             if(P[j]=T[j+i]){
@@ -166,22 +171,26 @@ int main(int argc, const char * const argv[]) {
         }
     }*/
 
-    size_t k =0;
+    size_t k = n;
     while(k<=m){
-        size_t i = n;
+        size_t i = n; //is it bad to be defining these each loop?
         size_t h = k;
-        while(i>0 && P[i] = T[h]){
+        while(i>0 && P[i] == T[h]){
             i = i-1;
             h = h-1;
         }
         if(i=0){
-            cout << "There's a matching occurrence starting at " << k+1 << endl;
+            cout << "There's a matching occurrence starting at " << k+1 << endl;\
+            ++matches;
             k=k_n-l(1);
         }else{
-            //shift P (increase k) by the max amunt determined by extended bad char rule and good suffix rule
+            //shift P (increase k) by the max amount. Do if else? or both and max?
+
+            //Good suffix rule shift
+
+            //Bad character rule
         }
     }
-
-    clock_t end = clock();
-    printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
+    cout << "Number of matches is: " << matches << endl;
+    cout << "Number of comparisons was: " << comparisons << endl;
 }
