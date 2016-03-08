@@ -34,26 +34,27 @@ static void create_Rlist(const string &P, struct &Rlist){
         }
     }
 }
-static int lookupR(struct &Rlist, size_t &pos, char bp){
-    size_t i = 0;
+static int lookupR(struct &Rlist, int pos, char bp){
+    size_t j = 0;
+    int newshift = pos;
     if(bp=='A'){
-        while(Rlist.a[i]<=pos){
-            ++i;
-        }
+        while(Rlist.a[j]>=pos && j<Rlist.a.size()){ //what if run out of space?
+            ++j;
+        }newshift = Rlist.a[j];
     } else if(bp=='C'){
-        while(Rlist.c[i]<=pos){
-            ++i;
-            }
+        while(Rlist.c[j]>=pos && j<Rlist.c.size()){
+            ++j;
+            }newshift = Rlist.c[j];
     } else if(bp=='G'){
-        while(Rlist.g[i]<=pos){
-            ++i;
-        }
+        while(Rlist.g[j]>=pos && j<Rlist.g.size()){
+            ++j;
+        }newshift = Rlist.g[j];
     }else{
-        while(Rlist.a[i]<=pos){
-            ++i;
-        }
+        while(Rlist.a[j]>=pos && j<Rlist.t.size()){
+            ++j;
+        }newshift = Rlist.g[j];
     }
-    return i;
+    return newshift; //what if already last position?
 }
 
 static size_t
@@ -138,7 +139,7 @@ int main(int argc, const char * const argv[]) {
     } Rlist;
 
     size_t matches=0;
-    size_t comparisons =0;
+    //size_t comparisons =0;
 
     //Setting up extended bad character rule
     create_Rlist(P,Rlist)
@@ -147,7 +148,7 @@ int main(int argc, const char * const argv[]) {
     vector<size_t> N(n);
     reverseZ(N,P,comparisons);
 
-    vector<size_t> Lprime(n,0); //should be a constant or not?
+    vector<size_t> Lprime(n,0);
     good_suffix(Lprime,N,n);
 
     vector<size_t> l(n,0);
@@ -178,17 +179,23 @@ int main(int argc, const char * const argv[]) {
         while(i>0 && P[i] == T[h]){
             i = i-1;
             h = h-1;
+            //++comparisons;
         }
         if(i=0){
-            cout << "There's a matching occurrence starting at " << k+1 << endl;\
+            //cout << "There's a matching occurrence starting at " << k+1 << endl;
             ++matches;
-            k=k_n-l(1);
+            k=k_n-lprime(1);
         }else{
-            //shift P (increase k) by the max amount. Do if else? or both and max?
-
+            //shift P (increase k, position of end of pattern) by the max amount
             //Good suffix rule shift
-
+            if(Lprime[i] > 0){
+                size_t goodsuf = n-Lprime[i];
+            }else{
+                size_t goodsuf = n-lprime[i];
+            }
             //Bad character rule
+            int badchar = i-lookupR(Rlist,i,T[h]);
+            k = max(k+goodsuf,k+badchar); //or k=k+max(goodsuf,badchar)
         }
     }
     cout << "Number of matches is: " << matches << endl;
