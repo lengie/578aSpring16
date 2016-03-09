@@ -111,8 +111,8 @@ static void reverseZ(vector<size_t> &N, const string &P, size_t &comparisons){
 }
 
 static void good_suffix(vector<int> &Lprime,const vector<size_t> &N, const size_t n){
-    for(int j = 0; j < n; ++j){ //n-2?
-        int i = n - N[j] -1;
+    for(int j = 0; j < n; ++j){
+        int i = n - N[j]-1; //not convinced
         Lprime[i] = j;
     }
 }
@@ -176,27 +176,27 @@ int main(int argc, const char * const argv[]) {
 
     int k = n-1;
     while(k < m){
-        int i = n-1; //is it bad to be defining these each loop?
+        int i = n-1;
         int h = k;
         int goodsuf;
         while(i>-1 && P[i]==toupper(T[h])){
-            i = i-1;
-            h = h-1;
+            --i;
+            --h;
             //++comparisons;
         }
         if(i==-1){
             ++matches;
-            k=k+n-lprime[1];
+            k+=n-lprime[1];
         }else{
             //Good suffix rule shift
-            if(Lprime[i+1] > 0){
-                goodsuf = n-Lprime[i+1];
+            if(Lprime[i] > 0){
+                goodsuf = n-Lprime[i]-1;
             }else{
-                goodsuf = n-lprime[i+1];
+                goodsuf = n-lprime[i]-1;
             }
             //Bad character rule
             int badchar = i-lookupR(Rlist,i,toupper(T[h]));
-            k = k+max(goodsuf,badchar);
+            k += max(goodsuf,badchar);
         }
     }
     cout << "Number of matches is: " << matches << endl;
