@@ -124,8 +124,8 @@ static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n)
     while(j >= 0 && i < n){
         if(N[j]==j+1){
             while(j <= n-i+1 && i < n){
-                i++;
                 lprime[i] = j+1;
+                i++;
             }
         }
     j--;
@@ -195,7 +195,7 @@ int main(int argc, const char * const argv[]) {
                 goodsuf = n-lprime[i]-1;
             }
             //Bad character rule
-            int badchar = i-lookupR(Rlist,i,toupper(T[h]))-1;
+            int badchar = i-lookupR(Rlist,i,toupper(T[h]));
             k += max(1,max(goodsuf,badchar));
         }
     }
