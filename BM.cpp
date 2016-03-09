@@ -111,8 +111,8 @@ static void reverseZ(vector<size_t> &N, const string &P, size_t &comparisons){
 }
 
 static void good_suffix(vector<int> &Lprime,const vector<size_t> &N, const size_t n){
-    for(int j = 0; j < n; ++j){
-        int i = n - N[j]-1; //not convinced
+    for(int j = 0; j < n; ++j){ //why not n-2?
+        int i = n - N[j]-1; //checked, but I'm still not sure
         Lprime[i] = j;
     }
 }
@@ -123,7 +123,7 @@ static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n)
     int j = n-1;
     while(j >= 0 && i < n){
         if(N[j]==j+1){
-            while(j <= n-i+1 && i < n){
+            while(j <= n-i-1 && i < n){
                 i++;
                 lprime[i] = j+1;
             }
@@ -186,13 +186,13 @@ int main(int argc, const char * const argv[]) {
         }
         if(i==-1){
             ++matches;
-            k+=n-lprime[1];
+            k += n-lprime[1];
         }else{
             //Good suffix rule shift
             if(Lprime[i] > 0){
-                goodsuf = n-Lprime[i]-1;
+                goodsuf = n-Lprime[i];
             }else{
-                goodsuf = n-lprime[i]-1;
+                goodsuf = n-lprime[i];
             }
             //Bad character rule
             int badchar = i-lookupR(Rlist,i,toupper(T[h]));
