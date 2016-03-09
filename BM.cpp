@@ -45,8 +45,6 @@ static void create_Rlist(const string &P, Rs &Rlist){
 static int lookupR(Rs &Rlist, int pos, char bp){ //This is a messy program
     size_t j = 0;
     int newshift = pos;
-    cout << "The basepair is " << bp << endl;
-    cout << "position in pattern is " << pos << endl;
     if(bp=='A' && !Rlist.a.empty()){
         while(Rlist.a[j]>=pos && (j<Rlist.a.size())){
             ++j;
@@ -66,14 +64,13 @@ static int lookupR(Rs &Rlist, int pos, char bp){ //This is a messy program
     }else{
         newshift = pos-1;
     }
-    cout << "The next position is " << newshift << endl;
     return newshift;
 }
 
 static size_t
 match(const string &s, size_t q, const size_t n, size_t &comparisons) {
   for (size_t i = n; max(q, i) < s.length() &&
-         (toupper(s[i])==toupper(s[q])); ++i, ++q, ++comparisons);
+         (s[i]==s[q]); ++i, ++q, ++comparisons);
   return q;
 }
 
@@ -84,50 +81,54 @@ static void reverseZ(vector<size_t> &N, const string &P, size_t &comparisons){
         Pr[n-k-1] = P[k];
     }
 
+    vector<size_t> Z(n,0);
     size_t l = 0, r = 0;
     for (size_t k = 1; k < n; ++k) {
         if (k >= r) {
-            N[k] = match(Pr, 0, k, comparisons);
-            if (N[k] > 0) {
-                r = k + N[k];
+            Z[k] = match(Pr, 0, k, comparisons);
+            if (Z[k] > 0) {
+                r = k + Z[k];
                 l = k;
             }
         }
         else {
             const size_t k_prime = k - l;
             const size_t beta_len = r - k;
-            if (N[k_prime] < beta_len) {
-                N[k] = N[k_prime];
+            if (Z[k_prime] < beta_len) {
+                Z[k] = Z[k_prime];
             }
             else {
                 const size_t q = match(Pr, r, beta_len, comparisons);
-                N[k] = q - k;
+                Z[k] = q - k;
                 r = q;
                 l = k;
             }
         }
     }
+    for(int i =0;i<n;++i){
+        N[i] = Z[n-i-1];
+    }
 }
 
-static void good_suffix(vector<size_t> &Lprime,const vector<size_t> &N, const size_t n){
-    for(size_t j = 0; j<n; ++j){
-        size_t i = n-N[j];
+static void good_suffix(vector<int> &Lprime,const vector<size_t> &N, const size_t n){
+    for(int j = 0; j < n; ++j){ //n-2?
+        int i = n - N[j] -1;
         Lprime[i] = j;
     }
 }
 
 static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n){
     //largest suffix of P[i...n] that is also a prefix of P
-    for(int i = 0; i<n;++i){
-        vector<int> temp;
-        for(int j = i; j<n; ++j){
-            if(j <= n-i && N[j]==j){
-                temp.push_back(j);
+    int i = 0;
+    int j = n-1;
+    while(j >= 0 && i < n){
+        if(N[j]==j+1){
+            while(j <= n-i+1 && i < n){
+                i++;
+                lprime[i] = j+1;
             }
         }
-        if(temp.size()>0){
-            lprime[i]=*(max_element(temp.begin(),temp.end()));
-        }
+    j--;
     }
 }
 
@@ -163,50 +164,39 @@ int main(int argc, const char * const argv[]) {
     create_Rlist(P,Rlist);
 
     //Setting up good suffix rule
-    vector<size_t> N(n);
+    vector<size_t> N(n,0);
     reverseZ(N,P,comparisons);
-    cout << "Got the Ns" << endl;
 
-    vector<size_t> Lprime(n,0);
+    vector<int> Lprime(n,0);
     good_suffix(Lprime,N,n);
-    cout << "Got the L's" << endl;
 
     vector<int> lprime(n,0);
     //largest suffix of P[i...n] that is also a prefix of P
     sufpref(lprime,N,n);
-    cout << "Got the l's" << endl;
 
-    size_t k = n-1;
+    int k = n-1;
     while(k < m){
-        size_t i = n-1; //is it bad to be defining these each loop?
-        size_t h = k;
-        size_t goodsuf;
-        cout << "P is " << P[i] << " and T is " << T[h] << endl;
-        while(i>0 && P[i]==toupper(T[h])){
+        int i = n-1; //is it bad to be defining these each loop?
+        int h = k;
+        int goodsuf;
+        while(i>-1 && P[i]==toupper(T[h])){
             i = i-1;
             h = h-1;
             //++comparisons;
         }
-        if(i==0){
+        if(i==-1){
             ++matches;
             k=k+n-lprime[1];
-            cout << "After match, the k is " << k << endl;
         }else{
-            //shift P (increase k, position of end of pattern) by the max amount
             //Good suffix rule shift
-            cout << "Have to shift" << endl;
-            if(Lprime[i] > 0){
-                goodsuf = n-Lprime[i]-1;
+            if(Lprime[i+1] > 0){
+                goodsuf = n-Lprime[i+1];
             }else{
-                goodsuf = n-lprime[i]-1;
+                goodsuf = n-lprime[i+1];
             }
-            cout << goodsuf << " is the good suffix rule shift" << endl;
             //Bad character rule
             int badchar = i-lookupR(Rlist,i,toupper(T[h]));
-            cout << badchar << " bad character shifts" << endl;
-            cout << "Comparing..." << endl;
-            k = max(k+goodsuf,k+badchar); //or k=k+max(goodsuf,badchar)
-            cout << "k is now " << k << endl;
+            k = k+max(goodsuf,badchar);
         }
     }
     cout << "Number of matches is: " << matches << endl;
