@@ -23,8 +23,11 @@ using std::string;
 using std::cout;
 using std::endl;
 
+
+int comparisons = 0;
+
 static void
-compute_prefix_function(const string &P, vector<size_t> &sp, size_t &comparisons) {
+compute_prefix_function(const string &P, vector<size_t> &sp, int &comparisons) {
   const size_t n = P.length();
   sp.resize(n, 0);
 
@@ -33,18 +36,16 @@ compute_prefix_function(const string &P, vector<size_t> &sp, size_t &comparisons
 
     size_t inner_loops = 0;
     while (k > 0 && P[k] != P[i])
-      k = sp[k - 1];
-      ++comparisons;
-
+        k = sp[k - 1];
+        ++comparisons;
     if (P[k] == P[i]) ++k;
-
     sp[i] = k;
   }
 }
 
 static void
 Knuth_Morris_Pratt(const string &T, const string &P, const vector<size_t> &sp,
-                   vector<size_t> &matches) {
+                   vector<int> &matches, int &comparisons) {
 
   const size_t m = P.length();
   const size_t n = T.length();
@@ -54,11 +55,11 @@ Knuth_Morris_Pratt(const string &T, const string &P, const vector<size_t> &sp,
 
     // look for the longest prefix of P that is the same as a suffix
     // of P[1..j - 1] AND has a different next character
-    while (j > 0 && P[j] != T[i])
+    while (j > 0 && P[j] != toupper(T[i]))
       j = sp[j - 1];
       ++comparisons;
     // check if the character matches
-    if (P[j] == T[i]) ++j;
+    if (P[j] == toupper(T[i])) ++j, ++comparisons;
 
     // if we have already successfully compared all positions in P,
     // then we have found a match
@@ -75,10 +76,11 @@ read_fasta_file_single_sequence(const string &filename, string &T) {
 
   std::ifstream in(filename.c_str());
 
-  string line;
-  in >> line;
-  while (in >> line)
-    T += line;
+    string line;
+    line.reserve(3e8);
+    in >> line;
+    while (in >> line)
+        T.append(line);
 }
 
 int
@@ -101,15 +103,8 @@ main(int argc, const char * const argv[]) {
   vector<size_t> sp;
   compute_prefix_function(P, sp, comparisons);
 
-  /*cout << "P:\t" << argv[1] << endl;
-  for (size_t i = 0; i < sp.size(); ++i)
-    cout << i + 1 << "\t" << sp[i] << endl;*/
-
-  size_t comparisons = 0;
-
-  // use the KMP scan procedure to find matches of "P" in text "T"
-  vector<size_t> matches;
-  Knuth_Morris_Pratt(T, P, sp, matches);
+  vector<int> matches;
+  Knuth_Morris_Pratt(T, P, sp, matches, comparisons);
 
   // output the results
   cout << endl << "MATCH COUNT:\t" << matches.size() << endl;
