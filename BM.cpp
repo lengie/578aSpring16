@@ -16,6 +16,7 @@ Output:
 #include <fstream>
 #include <cassert>
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 
@@ -26,10 +27,13 @@ struct Rs{
     vector<size_t> t;
 } Rlist;
 
-static void create_Rlist(const string &P, Rs Rlist){
-    for(size_t i=P.size()-1; i>=0; --i){
+static void create_Rlist(const string &P, Rs &Rlist){
+cout << P << endl;
+    for(int i=P.size()-1; i>=0; i--){
+    cout << i << endl;
         if(P[i]=='A'){
             Rlist.a.push_back(i);
+            cout << "Read an A at" << i <<endl;
         }
         else if(P[i]=='C'){
             Rlist.c.push_back(i);
@@ -39,6 +43,7 @@ static void create_Rlist(const string &P, Rs Rlist){
         }
         else if(P[i]=='T'){
             Rlist.t.push_back(i);
+            cout << "Read a T at " << i << endl;
         }
     }
     cout << "Rs list was fine" << endl;
@@ -50,7 +55,7 @@ static int lookupR(struct Rs &Rlist, int pos, char bp){
         while(Rlist.a[j]>=pos && (j<Rlist.a.size())){
             ++j;
         }newshift = Rlist.a[j];
-    } else if(bp=='C'){
+    } else if(bp=='C' && 'c'){
         while(Rlist.c[j]>=pos && j<Rlist.c.size()){
             ++j;
             }newshift = Rlist.c[j];
@@ -58,10 +63,12 @@ static int lookupR(struct Rs &Rlist, int pos, char bp){
         while(Rlist.g[j]>=pos && j<Rlist.g.size()){
             ++j;
         }newshift = Rlist.g[j];
-    }else{
+    }else if(bp=='T') {
         while(Rlist.a[j]>=pos && j<Rlist.t.size()){
             ++j;
         }newshift = Rlist.g[j];
+    }else{
+        newshift = 1;
     }
     return newshift;
 }
@@ -69,7 +76,7 @@ static int lookupR(struct Rs &Rlist, int pos, char bp){
 static size_t
 match(const string &s, size_t q, const size_t n, size_t &comparisons) {
   for (size_t i = n; max(q, i) < s.length() &&
-         (s[i] == s[q]); ++i, ++q, ++comparisons);
+         (boost::iequals(s[i],s[q])); ++i, ++q, ++comparisons);
   return q;
 }
 
@@ -114,14 +121,18 @@ static void good_suffix(vector<size_t> &Lprime,const vector<size_t> &N, const si
 
 static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n){
     //largest suffix of P[i...n] that is also a prefix of P
-    for(size_t i = 0; i<n;++i){
+    for(int i = 0; i<n;++i){
         vector<int> temp;
-        for(size_t j = i; j<n; ++j){
-            if(j <= n-1+i && N[j]==j){
+        for(int j = i; j<n; ++j){
+        cout << "i is " << i << "and j is " << j << endl;
+            if(j <= n-i && N[j]==j){
                 temp.push_back(j);
+                cout << j << " added to temp" << endl;
             }
         }
-    lprime[i]=*max_element(temp.begin(),temp.end());
+        if(temp.size()>0){
+            lprime[i]=*(max_element(temp.begin(),temp.end()));
+        }
     }
 }
 
@@ -129,11 +140,14 @@ static void
 read_fasta_file_single_sequence(const string &filename, string &T) {
 
     ifstream in(filename.c_str());
+    cout << "Opened the file" << endl;
 
     string line;
+    //streampos filesize = filename.tellg();
+    line.reserve(3e8);
     in >> line;
     while (in >> line)
-        T.append(line); //reserve
+        T.append(line);
 }
 
 int main(int argc, const char * const argv[]) {
@@ -148,6 +162,7 @@ int main(int argc, const char * const argv[]) {
     read_fasta_file_single_sequence(filename, T);
     const size_t m = T.length();
     assert(n <= m);
+    cout << "Finished reading" << endl;
 
     size_t matches=0;
     size_t comparisons =0;
@@ -169,12 +184,15 @@ int main(int argc, const char * const argv[]) {
     sufpref(lprime,N,n);
     cout << "Got the l's" << endl;
 
-    size_t k = n;
-    while(k<=m){
-        size_t i = n; //is it bad to be defining these each loop?
+    size_t k = n-1;
+    cout << T.size() << endl;
+    while(k < m){
+        size_t i = n-1; //is it bad to be defining these each loop?
         size_t h = k;
         size_t goodsuf;
-        while(i>0 && P[i] == T[h]){
+        cout << "P is " << P[i] <<endl;
+        cout << "T is " << T[h] <<endl;
+        while(i>0 && boost::iequals(P[i],T[h])){
             i = i-1;
             h = h-1;
             //++comparisons;
@@ -188,6 +206,7 @@ int main(int argc, const char * const argv[]) {
         }else{
             //shift P (increase k, position of end of pattern) by the max amount
             //Good suffix rule shift
+            cout << "there's a mismatch " << endl;
             if(Lprime[i] > 0){
                 goodsuf = n-Lprime[i];
             }else{
