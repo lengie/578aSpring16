@@ -16,7 +16,6 @@ Output:
 #include <fstream>
 #include <cassert>
 #include <algorithm>
-#include <boost/algorithm/string.hpp>
 
 using namespace std;
 
@@ -28,12 +27,9 @@ struct Rs{
 } Rlist;
 
 static void create_Rlist(const string &P, Rs &Rlist){
-cout << P << endl;
     for(int i=P.size()-1; i>=0; i--){
-    cout << i << endl;
         if(P[i]=='A'){
             Rlist.a.push_back(i);
-            cout << "Read an A at" << i <<endl;
         }
         else if(P[i]=='C'){
             Rlist.c.push_back(i);
@@ -43,40 +39,41 @@ cout << P << endl;
         }
         else if(P[i]=='T'){
             Rlist.t.push_back(i);
-            cout << "Read a T at " << i << endl;
         }
     }
-    cout << "Rs list was fine" << endl;
 }
-static int lookupR(struct Rs &Rlist, int pos, char bp){
+static int lookupR(Rs &Rlist, int pos, char bp){ //This is a messy program
     size_t j = 0;
     int newshift = pos;
-    if(bp=='A'){
+    cout << "The basepair is " << bp << endl;
+    cout << "position in pattern is " << pos << endl;
+    if(bp=='A' && !Rlist.a.empty()){
         while(Rlist.a[j]>=pos && (j<Rlist.a.size())){
             ++j;
         }newshift = Rlist.a[j];
-    } else if(bp=='C' && 'c'){
-        while(Rlist.c[j]>=pos && j<Rlist.c.size()){
+    } else if(bp=='C' && !Rlist.c.empty()){
+        while(Rlist.c[j]>=pos && (j<Rlist.c.size())){
             ++j;
             }newshift = Rlist.c[j];
-    } else if(bp=='G'){
-        while(Rlist.g[j]>=pos && j<Rlist.g.size()){
+    } else if(bp=='G' && !Rlist.g.empty()){
+        while(Rlist.g[j]>=pos && (j<Rlist.g.size())){
             ++j;
         }newshift = Rlist.g[j];
-    }else if(bp=='T') {
-        while(Rlist.a[j]>=pos && j<Rlist.t.size()){
+    }else if(bp=='T' && !Rlist.t.empty()) {
+        while(Rlist.t[j]>=pos && (j<Rlist.t.size())){
             ++j;
-        }newshift = Rlist.g[j];
+        }newshift = Rlist.t[j];
     }else{
-        newshift = 1;
+        newshift = pos-1;
     }
+    cout << "The next position is " << newshift << endl;
     return newshift;
 }
 
 static size_t
 match(const string &s, size_t q, const size_t n, size_t &comparisons) {
   for (size_t i = n; max(q, i) < s.length() &&
-         (boost::iequals(s[i],s[q])); ++i, ++q, ++comparisons);
+         (toupper(s[i])==toupper(s[q])); ++i, ++q, ++comparisons);
   return q;
 }
 
@@ -124,10 +121,8 @@ static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n)
     for(int i = 0; i<n;++i){
         vector<int> temp;
         for(int j = i; j<n; ++j){
-        cout << "i is " << i << "and j is " << j << endl;
             if(j <= n-i && N[j]==j){
                 temp.push_back(j);
-                cout << j << " added to temp" << endl;
             }
         }
         if(temp.size()>0){
@@ -140,7 +135,6 @@ static void
 read_fasta_file_single_sequence(const string &filename, string &T) {
 
     ifstream in(filename.c_str());
-    cout << "Opened the file" << endl;
 
     string line;
     //streampos filesize = filename.tellg();
@@ -161,8 +155,6 @@ int main(int argc, const char * const argv[]) {
     string T;
     read_fasta_file_single_sequence(filename, T);
     const size_t m = T.length();
-    assert(n <= m);
-    cout << "Finished reading" << endl;
 
     size_t matches=0;
     size_t comparisons =0;
@@ -185,36 +177,36 @@ int main(int argc, const char * const argv[]) {
     cout << "Got the l's" << endl;
 
     size_t k = n-1;
-    cout << T.size() << endl;
     while(k < m){
         size_t i = n-1; //is it bad to be defining these each loop?
         size_t h = k;
         size_t goodsuf;
-        cout << "P is " << P[i] <<endl;
-        cout << "T is " << T[h] <<endl;
-        while(i>0 && boost::iequals(P[i],T[h])){
+        cout << "P is " << P[i] << " and T is " << T[h] << endl;
+        while(i>0 && P[i]==toupper(T[h])){
             i = i-1;
             h = h-1;
             //++comparisons;
-            cout << "Matching..." << endl;
         }
         if(i==0){
-            //cout << "There's a matching occurrence starting at " << k+1 << endl;
             ++matches;
             k=k+n-lprime[1];
-            cout << "Found a match" << endl;
+            cout << "After match, the k is " << k << endl;
         }else{
             //shift P (increase k, position of end of pattern) by the max amount
             //Good suffix rule shift
-            cout << "there's a mismatch " << endl;
+            cout << "Have to shift" << endl;
             if(Lprime[i] > 0){
-                goodsuf = n-Lprime[i];
+                goodsuf = n-Lprime[i]-1;
             }else{
-                goodsuf = n-lprime[i];
+                goodsuf = n-lprime[i]-1;
             }
+            cout << goodsuf << " is the good suffix rule shift" << endl;
             //Bad character rule
-            int badchar = i-lookupR(Rlist,i,T[h]);
+            int badchar = i-lookupR(Rlist,i,toupper(T[h]));
+            cout << badchar << " bad character shifts" << endl;
+            cout << "Comparing..." << endl;
             k = max(k+goodsuf,k+badchar); //or k=k+max(goodsuf,badchar)
+            cout << "k is now " << k << endl;
         }
     }
     cout << "Number of matches is: " << matches << endl;
