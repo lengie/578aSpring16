@@ -15,30 +15,39 @@ Output:
 #include <ctime>
 #include <fstream>
 #include <cassert>
+#include <algorithm>
 
 using namespace std;
 
-static void create_Rlist(const string &P, struct &Rlist){
+struct Rs{
+    vector<size_t> a;
+    vector<size_t> c;
+    vector<size_t> g;
+    vector<size_t> t;
+} Rlist;
+
+static void create_Rlist(const string &P, Rs Rlist){
     for(size_t i=P.size()-1; i>=0; --i){
-        if(s[i]=='A'){
+        if(P[i]=='A'){
             Rlist.a.push_back(i);
         }
-        else if(s[i]=='C'){
+        else if(P[i]=='C'){
             Rlist.c.push_back(i);
         }
-        else if(s[i]=='G'){
+        else if(P[i]=='G'){
             Rlist.g.push_back(i);
         }
-        else if(s[i]=='T'){
+        else if(P[i]=='T'){
             Rlist.t.push_back(i);
         }
     }
+    cout << "Rs list was fine" << endl;
 }
-static int lookupR(struct &Rlist, int pos, char bp){
+static int lookupR(struct Rs &Rlist, int pos, char bp){
     size_t j = 0;
     int newshift = pos;
     if(bp=='A'){
-        while(Rlist.a[j]>=pos && j<Rlist.a.size()){ //what if run out of space?
+        while(Rlist.a[j]>=pos && (j<Rlist.a.size())){
             ++j;
         }newshift = Rlist.a[j];
     } else if(bp=='C'){
@@ -54,7 +63,7 @@ static int lookupR(struct &Rlist, int pos, char bp){
             ++j;
         }newshift = Rlist.g[j];
     }
-    return newshift; //what if already last position?
+    return newshift;
 }
 
 static size_t
@@ -65,9 +74,10 @@ match(const string &s, size_t q, const size_t n, size_t &comparisons) {
 }
 
 static void reverseZ(vector<size_t> &N, const string &P, size_t &comparisons){
-    n = P.size();
+    const size_t n = P.size();
+    string Pr(n, ' ');
     for(size_t k=0;k<n;++k){
-        Pr[n-k-1] = P[i];
+        Pr[n-k-1] = P[k];
     }
 
     size_t l = 0, r = 0;
@@ -95,16 +105,24 @@ static void reverseZ(vector<size_t> &N, const string &P, size_t &comparisons){
     }
 }
 
-static void good_suffix(vector<size_t> &Lprime,const string &N, const size_t n){
-    for(size_t j = 0; i<n; ++i){ //n-1?
+static void good_suffix(vector<size_t> &Lprime,const vector<size_t> &N, const size_t n){
+    for(size_t j = 0; j<n; ++j){
         size_t i = n-N[j];
         Lprime[i] = j;
     }
 }
 
-static void sufpref(vector<size_t> &lprime, const string &P, const size_t n){
+static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n){
     //largest suffix of P[i...n] that is also a prefix of P
-
+    for(size_t i = 0; i<n;++i){
+        vector<int> temp;
+        for(size_t j = i; j<n; ++j){
+            if(j <= n-1+i && N[j]==j){
+                temp.push_back(j);
+            }
+        }
+    lprime[i]=*max_element(temp.begin(),temp.end());
+    }
 }
 
 static void
@@ -115,7 +133,7 @@ read_fasta_file_single_sequence(const string &filename, string &T) {
     string line;
     in >> line;
     while (in >> line)
-        T += line;
+        T.append(line); //reserve
 }
 
 int main(int argc, const char * const argv[]) {
@@ -131,67 +149,49 @@ int main(int argc, const char * const argv[]) {
     const size_t m = T.length();
     assert(n <= m);
 
-    struct Rs{
-        vector<int> a;
-        vector<int> c;
-        vector<int> g;
-        vector<int> t;
-    } Rlist;
-
     size_t matches=0;
-    //size_t comparisons =0;
+    size_t comparisons =0;
 
     //Setting up extended bad character rule
-    create_Rlist(P,Rlist)
+    create_Rlist(P,Rlist);
 
     //Setting up good suffix rule
     vector<size_t> N(n);
     reverseZ(N,P,comparisons);
+    cout << "Got the Ns" << endl;
 
     vector<size_t> Lprime(n,0);
     good_suffix(Lprime,N,n);
+    cout << "Got the L's" << endl;
 
-    vector<size_t> l(n,0);
+    vector<int> lprime(n,0);
     //largest suffix of P[i...n] that is also a prefix of P
-    sufpref(lprime,n);
-
-    /*for(int i=0;i<m-n;){ //I wrote this framework before reading all the way through the book chapter
-        size_t k=0;
-        for(int j=n-1;j=0,--j){
-            if(P[j]=T[j+i]){
-                k=k+1;
-            }
-            else{ //mismatch
-                //Extended bad character rule
-                i=lookupR(&Rlist,j+i,T[j+i]);
-            }
-        }
-        if(k==n){
-            cout << "There's a matching occurrence starting at " << j+1 << endl;
-            i=i+n;
-        }
-    }*/
+    sufpref(lprime,N,n);
+    cout << "Got the l's" << endl;
 
     size_t k = n;
     while(k<=m){
         size_t i = n; //is it bad to be defining these each loop?
         size_t h = k;
+        size_t goodsuf;
         while(i>0 && P[i] == T[h]){
             i = i-1;
             h = h-1;
             //++comparisons;
+            cout << "Matching..." << endl;
         }
-        if(i=0){
+        if(i==0){
             //cout << "There's a matching occurrence starting at " << k+1 << endl;
             ++matches;
-            k=k_n-lprime(1);
+            k=k+n-lprime[1];
+            cout << "Found a match" << endl;
         }else{
             //shift P (increase k, position of end of pattern) by the max amount
             //Good suffix rule shift
             if(Lprime[i] > 0){
-                size_t goodsuf = n-Lprime[i];
+                goodsuf = n-Lprime[i];
             }else{
-                size_t goodsuf = n-lprime[i];
+                goodsuf = n-lprime[i];
             }
             //Bad character rule
             int badchar = i-lookupR(Rlist,i,T[h]);
@@ -199,5 +199,5 @@ int main(int argc, const char * const argv[]) {
         }
     }
     cout << "Number of matches is: " << matches << endl;
-    cout << "Number of comparisons was: " << comparisons << endl;
+    //cout << "Number of comparisons was: " << comparisons << endl;
 }
