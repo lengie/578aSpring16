@@ -1,230 +1,236 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <string.h>
-#include <algorithm>
-#include <ctime>
-
-using namespace std;
-
 /*
-MATH578a Spring 2016 HW2 - Liana Engie
-This program finds the banded alignment of pairs of sequences from a file with several input sequences
+MATH578a Spring 2016 Unit2 HW1 - Liana Engie
+Purpose: Implementation of Boyer-Moore algorithm for pattern matching.
 Input:
-    File with FASTA sequences,
-    w(match),
-    w(mismatch),
-    w(indel)
+    P, pattern
+    T, fasta file containing text string to be matched against
 Output:
-    d, distance between sequences
-    T, optimal alignment in a .tex file
-*/
+    All starting positions of substrings in T that exactly match P
+ */
+
 #include <iostream>
-#include <fstream>
-#include <vector>
 #include <string>
-#include <string.h>
-#include <algorithm>
+#include <vector>
+#include <cstdlib>
 #include <ctime>
-#include <map>
-#include <math.h>
+#include <fstream>
+#include <cassert>
+#include <algorithm>
 
 using namespace std;
 
-clock_t begintime = clock();
+struct Rs{
+    vector<size_t> a;
+    vector<size_t> c;
+    vector<size_t> g;
+    vector<size_t> t;
+} Rlist;
 
-int wmatch =  3;
-int wmism  =  -1;
-int windel = -3;
+static void create_Rlist(const string &P, Rs &Rlist){
+    for(int i=P.size()-1; i>=0; i--){
+        if(P[i]=='A'){
+            Rlist.a.push_back(i);
+            //cout << "Added an A at " << i << endl;
+        }
+        else if(P[i]=='C'){
+            Rlist.c.push_back(i);
+            //cout << "Added a C at " << i << endl;
+        }
+        else if(P[i]=='G'){
+            Rlist.g.push_back(i);
+            //cout << "Added a G at " << i << endl;
+        }
+        else if(P[i]=='T'){
+            Rlist.t.push_back(i);
+            //cout << "Added a T at " << i << endl;
+        }
+    }
+}
+static int lookupR(Rs &Rlist, int pos, char bp){ //This is a messy program
+    size_t j = 0;
+    int newshift = pos;
+    //cout << "The basepair is " << bp << endl;
+    //cout << "position in pattern is " << pos << endl;
+    if(bp=='A' && !Rlist.a.empty()){
+        while(Rlist.a[j]>=pos && (j<Rlist.a.size())){
+            ++j;
+        }newshift = Rlist.a[j];
+    } else if(bp=='C' && !Rlist.c.empty()){
+        while(Rlist.c[j]>=pos && (j<Rlist.c.size())){
+            ++j;
+            }newshift = Rlist.c[j];
+    } else if(bp=='G' && !Rlist.g.empty()){
+        while(Rlist.g[j]>=pos && (j<Rlist.g.size())){
+            ++j;
+        }newshift = Rlist.g[j];
+    }else if(bp=='T' && !Rlist.t.empty()) {
+        while(Rlist.t[j]>=pos && (j<Rlist.t.size())){
+            ++j;
+        }newshift = Rlist.t[j];
+    }else{
+        newshift = pos-1;
+    }
+    //cout << "The next position is " << newshift << endl;
+    return newshift;
+}
 
-int dmatch =  0;
-int dmism  =  1;
-int dindel = 1;
+static size_t
+match(const string &s, size_t q, const size_t n, size_t &comparisons) {
+  for (size_t i = n; max(q, i) < s.length() &&
+         (s[i]==s[q]); ++i, ++q, ++comparisons);
+  return q;
+}
 
-map <pair<int,int>,pair<int,int> > optPos;
-map <pair<int,int>,int> dist;
-string aligned1;
-string aligned2;
+static void reverseZ(vector<size_t> &N, const string &P, size_t &comparisons){
+    const size_t n = P.size();
+    string Pr(n, ' ');
+    for(size_t k=0;k<n;++k){
+        Pr[n-k-1] = P[k];
+    }
 
-int alignment_score(int **score,string seq1,string seq2,int n,int m,int c){
-
-    optPos.clear();
-    dist.clear();
-    for(int i=0;i<=n;++i)
-    {
-        score[i][0]=-100; //boundary on left as later rows won't initialize
-        int leftlim = max(0,i-c);
-        int rightlim = min(m,m-n+i+c);
-        for(int j=leftlim; j <= rightlim; ++j){
-            cout << j << endl;
-            if (i==0){
-                score[i][j+c+1] = j*windel; //replace with argv[4]
-            }else if (j==0){
-                score[i][c-i+1] = i*windel;
-            }else if (j==m-n+i+c){
-                score[i][j+c] = -100;
-            }else {
-                int t1 = score[i-1][j-(i-c)+1]+ ((seq1[i-1]==seq2[j-1]) ? wmatch:wmism); //argv[2]:argv[3]
-                int t2 = score[i][j-(i-c)] + windel;
-                int t3 = score[i-1][j-(i-c)+2] + windel;
-                score[i][j-(i-c)+1] = max(t1,max(t2,t3));
-                cout << i << "," << j-(i-c)+1 << " score is: " << score[i][j-(i-c)+1] << endl;
-
-                //keeping track of the position of optimal alignment and distance
-                if(t1==score[i][j-(i-c)+2]){
-                    optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-2);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-2)]+((seq1[i-1]==seq2[j-1]) ? dmatch:dmism);
-                }else if(t2==score[i][j-(i-c)]){
-                    optPos[make_pair(i-1,j-1)] = make_pair(i-1,j-2);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-1,j-2)]+dindel;
-                }else{
-                    optPos[make_pair(i-1,j-1)] = make_pair(i-2,j-1);
-                    dist[make_pair(i-1,j-1)] = dist[make_pair(i-2,j-1)]+dindel;
-                }
+    vector<size_t> Z(n,0);
+    size_t l = 0, r = 0;
+    for (size_t k = 1; k < n; ++k) {
+        if (k >= r) {
+            Z[k] = match(Pr, 0, k, comparisons);
+            if (Z[k] > 0) {
+                r = k + Z[k];
+                l = k;
+            }
+        }
+        else {
+            const size_t k_prime = k - l;
+            const size_t beta_len = r - k;
+            if (Z[k_prime] < beta_len) {
+                Z[k] = Z[k_prime];
+            }
+            else {
+                const size_t q = match(Pr, r, beta_len, comparisons);
+                Z[k] = q - k;
+                r = q;
+                l = k;
             }
         }
     }
-
-    cout << "getting score at " << n << " , " << c+m-n+1 << endl;
-    return score[n][c+m-n+1];
+    for(int i =0;i<n;++i){
+        N[i] = Z[n-i-1];
+        cout << "N at " << i << " is " << N[i] << endl;
+    }
 }
 
-int max_seq(string seq1,string seq2,float k)
-{
-    int n = seq1.size(); //should make a sequence class with names and sizes public instead of doing this
-    int m = seq2.size();
-    int c = ceil(k/2);
-
-    int **score;
-    score = new int*[n+1]; //initializations => score has 1 more row than seq size
-    int temp = m-n+ 2*c +2;
-    cout << "matrix size is " << temp << endl;
-
-    for(int i=0;i<n+1;++i)
-    {
-        score[i]=new int[temp]; //band is m-n+2*k wide
+static void good_suffix(vector<int> &Lprime,const vector<size_t> &N, const size_t n){
+    for(int j = 0; j<n; ++j){
+        int i = n - N[j]-1; //debated a lot about subtracting one from this
+        Lprime[i] = j;
+        cout << "Lprime at " << i << " is " << Lprime[i] << ", ";
     }
-    return alignment_score(score,seq1,seq2,n,m,c);
+    cout << endl;
 }
 
-void trace_back(string seq1,string seq2)
-{
-    int n = seq1.size(); //just so I don't have to type this a bunch of times
-    int m = seq2.size();
-
-    aligned1 = "";
-    aligned2 = "";
-
-    //Starting the traceback from the last element
-    vector<pair<int,int> > relevant;
-    relevant.push_back(make_pair(n-1,m-1)); //corresponds to sequence index, not score index
-
-    while(relevant[0].first+relevant[0].second != 0){
-        relevant.insert(relevant.begin(),
-                        optPos[relevant[0]]);
+static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n){
+    //largest suffix of P[i...n] that is also a prefix of P
+    /*for(int i = 0; i<n;++i){
+        vector<int> temp;
+        for(int j = i; j<n; ++j){
+            if(N[j]==j+1){
+                temp.push_back(j);
+            }
+        }
+        if(temp.size()>0){
+            lprime[i]=*(max_element(temp.begin(),temp.end()));
+            cout << "lprime at " << i << " is "<<lprime[i] << ", ";
+        }
     }
-    for(int i=0;i<relevant.size();++i)
-    {
-        if (relevant[i].first == relevant[i-1].first){
-            aligned1.append("-");
-            aligned2.push_back(seq2[i]);
-        }else if(relevant[i].second == relevant[i-1].second){
-            aligned1.push_back(seq1[i]);
-            aligned2.append("-");
+    cout << endl;*/
+    int i = 0,j = n-1;
+    while(j >= 0 && i < n){
+        if(N[j]==j+1){
+            while(j <= n-i-1 && i < n){
+                i++;
+                lprime[i] = j+1;
+                cout << "lprime at " << i << " is "<<lprime[i] << ", ";
+            }
+        }
+    j--;
+    }
+    cout << endl;
+}
+
+static void
+read_fasta_file_single_sequence(const string &filename, string &T) {
+
+    ifstream in(filename.c_str());
+
+    string line;
+    //streampos filesize = filename.tellg();
+    line.reserve(3e8);
+    in >> line;
+    while (in >> line)
+        T.append(line);
+}
+
+int main(int argc, const char * const argv[]) {
+    if (argc != 3) {
+        cerr << "usage: " << argv[0] << " <PATTERN> <TEXT>" << endl;
+        return EXIT_FAILURE;
+    }
+    const string P(argv[1]), T(argv[2]);//, filename(argv[2]);
+    const size_t n = P.length();
+    /*string T;
+    read_fasta_file_single_sequence(filename, T);*/
+    const size_t m = T.length();
+
+    size_t matches=0;
+    size_t comparisons =0;
+
+    //Setting up extended bad character rule
+    create_Rlist(P,Rlist);
+
+    //Setting up good suffix rule
+    vector<size_t> N(n,0);
+    reverseZ(N,P,comparisons);
+
+    vector<int> Lprime(n,0);
+    good_suffix(Lprime,N,n);
+
+    vector<int> lprime(n,0);
+    sufpref(lprime,N,n);
+
+    int k = n-1;
+    while(k < m){
+        int i = n-1; //is it bad to be defining these each loop?
+        int h = k;
+        int goodsuf;
+        while(i>-1 && P[i]==toupper(T[h])){
+            cout << "P is " << P[i] << " and T is " << T[h] << endl;
+            --i;
+            --h;
+            //++comparisons;
+        }
+        if(i==-1){
+            ++matches;
+            k+=n-lprime[1];
+            cout << "After match, the k is " << k << endl;
         }else{
-            aligned1.push_back(seq1[i]);
-            aligned2.push_back(seq2[i]);
+            //shift P (increase k, position of end of pattern) by the max amount
+            //Good suffix rule shift
+            //cout << "Have to shift" << endl;
+            if(Lprime[i] > 0){
+                cout << "using L' for shift" << endl;
+                goodsuf = n-Lprime[i];
+            }else{
+                cout << "using l' for shift" << endl;
+                goodsuf = n-lprime[i];
+            }
+            cout << goodsuf << " is the good suffix rule shift" << endl;
+            //Bad character rule
+            int badchar = i-lookupR(Rlist,i,toupper(T[h]));
+            cout << badchar << " bad character shifts" << endl;
+            //cout << "Comparing..." << endl;
+            k = k+max(goodsuf,badchar);
+            cout << "k is now " << k << endl;
         }
     }
-    cout << aligned1.size() << endl;
-    cout << aligned2.size() << endl;
+    cout << "Number of matches is: " << matches << endl;
+    //cout << "Number of comparisons was: " << comparisons << endl;
 }
-
-//argv[1]:string file, argv[2] int wmatch, argv[3] int wmism, argv[4] int windel
-int main(int argc, char **argv)
-{
-    vector <vector<string> > species;
-
-    vector<string> specname;
-    vector<string> specseq;
-
-    //Each file has multiple sequences, first line is species name and next lines are sequence
-    ifstream openfile;
-    //openfile.open(argv[1]);
-    openfile.open("HW1-File1.txt");
-
-    string read_lines;
-    string appending;
-
-    while (!openfile.eof()) // or, if(!openread.fail())?
-    {
-        openfile >> read_lines;
-        /* Note to self: >> is enough to acquire line up to first space.
-        Don't use getline because it will make a new line if there's nothing
-        on the current line, or may mess with spaces and such
-        */
-
-        if(read_lines[0] == '>')
-        {
-            //Push back the prior species' sequence
-            if(appending.size()>0){
-                specseq.push_back(appending);
-                appending = "";
-            }
-            specname.push_back(read_lines);
-            getline(openfile,read_lines); //just to get the rest of the line out of the way
-        }
-        else if(read_lines.size() > 0)
-        {
-            appending.append(read_lines);
-        }
-    }
-    //must pushback or will miss the sequence of the final species
-    specseq.push_back(appending);
-    openfile.close();
-
-    //ofstream resfile;
-    //resfile.open("HW2-output-LEngie.txt");
-
-    float k;
-    int alignmentscore;
-    int distance;
-
-    for(int i=0;i<1;i++){//specname.size();++i){
-        for(int j=0;j<1;j++){//specname.size();++j){
-                cout << specname[i] << " " << specname[j] << endl;
-                cout << "What is the k value for these sequences? Input an integer or -1 if unknown: " << endl;
-                cin >> k;
-                    if(k == -1){
-                        k = 1;
-                        int distance = 0;
-                        while(k>distance){
-                            alignmentscore = max_seq(specseq[i],specseq[j],k);
-                            distance = dist[make_pair(specseq[j].size()-1,specseq[j].size()-specseq[i].size()+ceil(k/2)-1)];
-                            k=k*2;
-                        }
-                        cout << "k was " << k/2 << endl;
-                    }else{
-                        alignmentscore = max_seq(specseq[i],specseq[j],k);
-                    }
-                cout << "alignment score is " << alignmentscore << endl;
-                int temp = specseq[j].size()-specseq[i].size()+ceil(k/2)-1;
-                cout << "distance between sequences is " << dist[make_pair(specseq[i].size()-1,temp)] << endl;
-                trace_back(specseq[i],specseq[j]);
-                //resfile << "first sequence" << endl;
-                //resfile << aligned1 << endl;
-                //resfile << "second sequence" << endl;
-                //resfile << aligned2 << endl;
-
-            }
-        }
-
-    //resfile.close();
-
-    clock_t end = clock();
-    printf("Time taken: %.2fs\n", (double)(clock() - begintime)/CLOCKS_PER_SEC);
-    return 0;
-}
-
-
