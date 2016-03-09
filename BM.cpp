@@ -123,7 +123,7 @@ static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n)
     int j = n-1;
     while(j >= 0 && i < n){
         if(N[j]==j+1){
-            while(j <= n-i-1 && i < n){
+            while(j <= n-i+1 && i < n){
                 i++;
                 lprime[i] = j+1;
             }
@@ -190,13 +190,13 @@ int main(int argc, const char * const argv[]) {
         }else{
             //Good suffix rule shift
             if(Lprime[i] > 0){
-                goodsuf = n-Lprime[i];
+                goodsuf = n-Lprime[i]-1;
             }else{
-                goodsuf = n-lprime[i];
+                goodsuf = n-lprime[i]-1;
             }
             //Bad character rule
             int badchar = i-lookupR(Rlist,i,toupper(T[h]));
-            k += max(goodsuf,badchar);
+            k += max(1,max(goodsuf,badchar));
         }
     }
     cout << "Number of matches is: " << matches << endl;
