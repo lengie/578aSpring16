@@ -49,28 +49,28 @@ static void create_Rlist(const string &P, Rs &Rlist){
 static int lookupR(Rs &Rlist, int pos, char bp){ //This is a messy program
     size_t j = 0;
     int newshift = pos;
-    //cout << "The basepair is " << bp << endl;
-    //cout << "position in pattern is " << pos << endl;
+    cout << "The basepair is " << bp << endl;
+    cout << "position in pattern is " << pos << endl;
     if(bp=='A' && !Rlist.a.empty()){
         while(Rlist.a[j]>=pos && (j<Rlist.a.size())){
-            ++j;
-        }newshift = Rlist.a[j];
+            newshift = Rlist.a[j], ++j;
+        }
     } else if(bp=='C' && !Rlist.c.empty()){
         while(Rlist.c[j]>=pos && (j<Rlist.c.size())){
-            ++j;
-            }newshift = Rlist.c[j];
+            newshift = Rlist.c[j], ++j;
+            }
     } else if(bp=='G' && !Rlist.g.empty()){
         while(Rlist.g[j]>=pos && (j<Rlist.g.size())){
-            ++j;
-        }newshift = Rlist.g[j];
+            newshift = Rlist.g[j], ++j;
+        }
     }else if(bp=='T' && !Rlist.t.empty()) {
         while(Rlist.t[j]>=pos && (j<Rlist.t.size())){
-            ++j;
-        }newshift = Rlist.t[j];
+            newshift = Rlist.t[j], ++j;
+        }
     }else{
         newshift = pos-1;
     }
-    //cout << "The next position is " << newshift << endl;
+    cout << "The next position is " << newshift << endl;
     return newshift;
 }
 
@@ -145,7 +145,7 @@ static void sufpref(vector<int> &lprime,const vector<size_t> &N, const size_t n)
     int i = 0,j = n-1;
     while(j >= 0 && i < n){
         if(N[j]==j+1){
-            while(j <= n-i-1 && i < n){
+            while(j <= n-i+1 && i < n){
                 i++;
                 lprime[i] = j+1;
                 cout << "lprime at " << i << " is "<<lprime[i] << ", ";
@@ -174,10 +174,10 @@ int main(int argc, const char * const argv[]) {
         cerr << "usage: " << argv[0] << " <PATTERN> <TEXT>" << endl;
         return EXIT_FAILURE;
     }
-    const string P(argv[1]), T(argv[2]);//, filename(argv[2]);
+    const string P(argv[1]), filename(argv[2]); //, T(argv[2]);
     const size_t n = P.length();
-    /*string T;
-    read_fasta_file_single_sequence(filename, T);*/
+    string T;
+    read_fasta_file_single_sequence(filename, T);
     const size_t m = T.length();
 
     size_t matches=0;
@@ -198,13 +198,14 @@ int main(int argc, const char * const argv[]) {
 
     int k = n-1;
     while(k < m){
-        int i = n-1; //is it bad to be defining these each loop?
+        int i = n-1;
         int h = k;
         int goodsuf;
-        while(i>-1 && P[i]==toupper(T[h])){
-            cout << "P is " << P[i] << " and T is " << T[h] << endl;
-            --i;
-            --h;
+        cout << "P is " << P[i] << " and T is " << T[h] << endl;
+        while(i > -1 && (P[i]==toupper(T[h]))){
+            i=i-1;
+            cout << i << endl;
+            h--;
             //++comparisons;
         }
         if(i==-1){
@@ -217,17 +218,17 @@ int main(int argc, const char * const argv[]) {
             //cout << "Have to shift" << endl;
             if(Lprime[i] > 0){
                 cout << "using L' for shift" << endl;
-                goodsuf = n-Lprime[i];
+                goodsuf = n-Lprime[i]-1;
             }else{
                 cout << "using l' for shift" << endl;
-                goodsuf = n-lprime[i];
+                goodsuf = n-lprime[i]-1;
             }
             cout << goodsuf << " is the good suffix rule shift" << endl;
             //Bad character rule
-            int badchar = i-lookupR(Rlist,i,toupper(T[h]));
+            int badchar = i-lookupR(Rlist,i,toupper(T[h]))-1;
             cout << badchar << " bad character shifts" << endl;
             //cout << "Comparing..." << endl;
-            k = k+max(goodsuf,badchar);
+            k = k+max(1,max(goodsuf,badchar));
             cout << "k is now " << k << endl;
         }
     }

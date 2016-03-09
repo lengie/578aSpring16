@@ -47,20 +47,20 @@ static int lookupR(Rs &Rlist, int pos, char bp){ //This is a messy program
     int newshift = pos;
     if(bp=='A' && !Rlist.a.empty()){
         while(Rlist.a[j]>=pos && (j<Rlist.a.size())){
-            ++j;
-        }newshift = Rlist.a[j];
+            newshift = Rlist.a[j], ++j;
+        }
     } else if(bp=='C' && !Rlist.c.empty()){
         while(Rlist.c[j]>=pos && (j<Rlist.c.size())){
-            ++j;
-            }newshift = Rlist.c[j];
+            newshift = Rlist.c[j], ++j;
+            }
     } else if(bp=='G' && !Rlist.g.empty()){
         while(Rlist.g[j]>=pos && (j<Rlist.g.size())){
-            ++j;
-        }newshift = Rlist.g[j];
+            newshift = Rlist.g[j], ++j;
+        }
     }else if(bp=='T' && !Rlist.t.empty()) {
         while(Rlist.t[j]>=pos && (j<Rlist.t.size())){
-            ++j;
-        }newshift = Rlist.t[j];
+            newshift = Rlist.t[j], ++j;
+        }
     }else{
         newshift = pos-1;
     }
@@ -182,7 +182,7 @@ int main(int argc, const char * const argv[]) {
         while(i>-1 && P[i]==toupper(T[h])){
             --i;
             --h;
-            //++comparisons;
+            ++comparisons;
         }
         if(i==-1){
             ++matches;
@@ -195,10 +195,10 @@ int main(int argc, const char * const argv[]) {
                 goodsuf = n-lprime[i]-1;
             }
             //Bad character rule
-            int badchar = i-lookupR(Rlist,i,toupper(T[h]));
+            int badchar = i-lookupR(Rlist,i,toupper(T[h]))-1;
             k += max(1,max(goodsuf,badchar));
         }
     }
     cout << "Number of matches is: " << matches << endl;
-    //cout << "Number of comparisons was: " << comparisons << endl;
+    cout << "Number of comparisons was: " << comparisons << endl;
 }
